@@ -5,7 +5,8 @@ Textures, fonts and sounds.
 Only media shipped with the game client is used (no copied artwork):
 - atlases used by Blizzard's own WoW Forever UI (1.60.1): the personal
   resource bar (UI-HUD-CoolDownManager-Bar*), the native swing timer
-  (ui-swingtimerbar-*) and action buttons (UI-HUD-ActionBar-IconFrame*);
+  (ui-swingtimerbar-*), the casting bar (ui-castingbar-*) and action
+  buttons (UI-HUD-ActionBar-IconFrame*);
 - long-standing interface files and the Latin fonts the client ships
   (Friz Quadrata, Arial Narrow, Morpheus, Skurri).
 
@@ -33,7 +34,19 @@ Media.textures = {
 			oh = "ui-swingtimerbar-filling-offhand",
 			ranged = "ui-swingtimerbar-filling-ranged",
 		},
+		pip = "ui-swingtimerbar-pip",
 		labelKey = "TEX_FOREVER_SWING",
+	},
+	ForeverCast = {
+		atlas = "ui-castingbar-filling-standard",
+		variants = {
+			cast = "ui-castingbar-filling-standard",
+			channel = "ui-castingbar-filling-channel",
+			done = "ui-castingbar-full-standard",
+			failed = "ui-castingbar-interrupted",
+		},
+		pip = "ui-castingbar-pip",
+		labelKey = "TEX_FOREVER_CAST",
 	},
 	Flat = { file = "Interface\\Buttons\\WHITE8X8", labelKey = "TEX_FLAT" },
 	Blizzard = { file = "Interface\\TargetingFrame\\UI-StatusBar", labelKey = "TEX_CLASSIC" },
@@ -41,7 +54,7 @@ Media.textures = {
 	Raid = { file = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill", labelKey = "TEX_RAID" },
 	Skills = { file = "Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar", labelKey = "TEX_SKILLS" },
 }
-Media.TEXTURE_KEYS = { "Forever", "ForeverSwing", "Flat", "Blizzard", "BarFill", "Raid", "Skills" }
+Media.TEXTURE_KEYS = { "Forever", "ForeverSwing", "ForeverCast", "Flat", "Blizzard", "BarFill", "Raid", "Skills" }
 Media.DEFAULT_TEXTURE = "Forever"
 
 -- Every font file below is referenced by Blizzard_Fonts_Shared in client
@@ -112,7 +125,8 @@ end
 -- atlases and offsets of Blizzard's personal resource display and swing timer.
 Media.frameStyles = {
 	Forever = { bgAtlas = "UI-HUD-CoolDownManager-Bar-BG", bgOffsets = { -2, 3, 6, -7 }, insetX = 0, insetY = 0 },
-	ForeverFrame = { bgAtlas = "ui-swingtimerbar-background", frameAtlas = "ui-swingtimerbar-frame", insetX = 5, insetY = 4 },
+	ForeverFrame = { bgAtlas = "ui-swingtimerbar-background", frameAtlas = "ui-swingtimerbar-frame", insetX = 5, insetY = 4, pip = "ui-swingtimerbar-pip" },
+	ForeverCast = { bgAtlas = "ui-castingbar-background", frameAtlas = "ui-castingbar-frame", insetX = 2, insetY = 2, pip = "ui-castingbar-pip" },
 }
 
 -- Stance button atlases (Blizzard's action button frame on Forever).

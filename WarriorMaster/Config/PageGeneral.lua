@@ -1,6 +1,7 @@
 --[[
 Warrior Master - Config/PageGeneral.lua
-Modules, frame locking, preview mode, presets, sounds, language, maintenance.
+Modules, frame locking, preview mode, position, automatic layout, presets,
+sounds, warrior fun, language, maintenance.
 ]]
 local _, ns = ...
 
@@ -19,6 +20,7 @@ ns.Config:RegisterPage({
 			{ "health", "MODULE_HEALTH" },
 			{ "rage", "MODULE_RAGE" },
 			{ "swing", "MODULE_SWING" },
+			{ "cast", "MODULE_CAST" },
 			{ "stance", "MODULE_STANCE" },
 		}) do
 			local get, set = UI.Bind(entry[1] .. ".enabled")
@@ -74,6 +76,52 @@ ns.Config:RegisterPage({
 				ns.DB:Set("general.offsetY", 0)
 			end,
 		})
+
+		-- Automatic vertical layout: on/off, gap, alignment, order.
+		page:Header(L.SECTION_AUTO_LAYOUT)
+		do
+			local get, set = UI.Bind("general.layout.enabled")
+			page:Checkbox({ label = L.LAYOUT_ENABLE, get = get, set = set }, true)
+		end
+		local function layoutOff()
+			return not ns.db.profile.general.layout.enabled
+		end
+		do
+			local get, set = UI.Bind("general.layout.gap")
+			page:Slider({ label = L.LAYOUT_GAP, min = 0, max = 60, step = 1, get = get, set = set, disabled = layoutOff })
+		end
+		do
+			local get, set = UI.Bind("general.layout.align")
+			page:Dropdown({
+				label = L.LAYOUT_ALIGN,
+				options = UI.Options({ "LEFT", "CENTER", "RIGHT" }, { LEFT = "ALIGN_LEFT", CENTER = "ALIGN_CENTER", RIGHT = "ALIGN_RIGHT" }),
+				get = get,
+				set = set,
+				disabled = layoutOff,
+			})
+		end
+		page:OrderList({
+			count = #ns.Layout.KEYS,
+			disabled = layoutOff,
+			items = function()
+				local items = {}
+				for _, key in ipairs(ns.db.profile.general.layout.order) do
+					local module = ns.modules[key]
+					local on = ns.db.profile[key].enabled
+					local text = L[module and module.titleKey or key] or key
+					if not on then
+						text = text .. "  " .. L.LAYOUT_OFF
+					end
+					items[#items + 1] = { value = key, text = text, dim = not on }
+				end
+				return items
+			end,
+			move = function(key, step)
+				return ns.Layout:Move(key, step)
+			end,
+		})
+		page:Skip()
+		page:Note(L.LAYOUT_NOTE)
 
 		-- Style picker: which style, which modules, which parts.
 		local Styles = ns.Styles
@@ -155,6 +203,32 @@ ns.Config:RegisterPage({
 				end,
 			})
 		end
+
+		page:Header(L.SECTION_FLAIR)
+		do
+			local get, set = UI.Bind("general.flair.enabled")
+			page:Checkbox({ label = L.FLAIR_ENABLE, get = get, set = set }, true)
+		end
+		local function flairOff()
+			return not ns.db.profile.general.flair.enabled
+		end
+		do
+			local get, set = UI.Bind("general.flair.chance")
+			page:Slider({ label = L.FLAIR_CHANCE, min = 0, max = 100, step = 5, get = get, set = set, disabled = flairOff })
+		end
+		do
+			local get, set = UI.Bind("general.flair.closeShout")
+			page:Checkbox({ label = L.FLAIR_CLOSE, get = get, set = set, disabled = flairOff })
+		end
+		page:Button({
+			text = L.FLAIR_TRY,
+			disabled = flairOff,
+			noFlair = true,
+			onClick = function()
+				ns.Flair:Execute(true)
+			end,
+		})
+		page:Note(L.FLAIR_NOTE)
 
 		page:Header(L.SECTION_INTERFACE)
 		page:Checkbox({

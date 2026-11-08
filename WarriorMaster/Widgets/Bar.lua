@@ -201,12 +201,14 @@ function Bar:ApplyStyle(cfg, opts)
 		self.shade:Hide()
 	end
 
-	-- Spark: the native swing "pip" with the Forever frame or swing texture,
-	-- the classic casting-bar spark otherwise.
+	-- Spark: the native "pip" of the Forever swing timer or casting bar
+	-- with their frame or texture, the classic casting-bar spark otherwise.
 	local h = height - insetY * 2
 	self.spark:ClearAllPoints()
-	local usePip = cfg.borderStyle == "ForeverFrame" or cfg.texture == "ForeverSwing"
-	if usePip and setAtlas(self.spark, Media.SWING_PIP_ATLAS, true) then
+	local frameStyle = Media.frameStyles[cfg.borderStyle]
+	local texture = Media.textures[cfg.texture]
+	local pip = (frameStyle and frameStyle.pip) or (texture and texture.pip)
+	if pip and setAtlas(self.spark, pip, true) then
 		self.spark:SetBlendMode("BLEND")
 		self.spark:SetHeight(math.max(4, h))
 		self.spark:SetPoint("RIGHT", fill, "RIGHT", 0, 0)

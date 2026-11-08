@@ -1,9 +1,9 @@
 ## Interface: 16001
 ## Title: Warrior Master
-## Notes: All-in-one Warrior toolkit: rage and health bars, swing timer, stance and weapon manager, macro builder.
-## Notes-frFR: Boîte à outils tout-en-un pour Guerrier : barres de rage et de vie, minuteur d'attaque, postures et armes, générateur de macros.
+## Notes: All-in-one Warrior toolkit: rage and health bars, swing timer, cast bar, stance and weapon manager, macro builder.
+## Notes-frFR: Boîte à outils tout-en-un pour Guerrier : barres de rage et de vie, minuteur d'attaque, barre d'incantation, postures et armes, générateur de macros.
 ## Author: buzk
-## Version: 1.1.0
+## Version: 1.2.0
 ## SavedVariables: WarriorMasterDB
 ## SavedVariablesPerCharacter: WarriorMasterCharDB
 ## IconTexture: Interface\Icons\Ability_Warrior_BattleShout
@@ -34,12 +34,14 @@ Core\Database.lua
 # Shared widgets
 Widgets\Bar.lua
 Widgets\Mover.lua
+Widgets\Layout.lua
 
 # Feature modules
 Modules\ResourceBar.lua
 Modules\Rage.lua
 Modules\Health.lua
 Modules\Swing.lua
+Modules\CastBar.lua
 Modules\Stance.lua
 Modules\StancePicker.lua
 Modules\MacroTemplates.lua
@@ -49,10 +51,12 @@ Modules\TestMode.lua
 # Configuration interface
 Config\Theme.lua
 Config\Controls.lua
+Config\Flair.lua
 Config\Panel.lua
 Config\PageGeneral.lua
 Config\PageBars.lua
 Config\PageSwing.lua
+Config\PageCast.lua
 Config\PageStance.lua
 Config\PageMacros.lua
 Config\PageProfiles.lua

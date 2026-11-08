@@ -37,10 +37,10 @@ Styles.LABEL_KEYS = {
 	Custom = "PRESET_CUSTOM",
 }
 
-Styles.SECTIONS = { "health", "rage", "swing", "stance" }
+Styles.SECTIONS = { "health", "rage", "swing", "cast", "stance" }
 Styles.PARTS = { "look", "colors", "fonts", "sizes" }
 Styles.PART_LABELS = { look = "PART_LOOK", colors = "PART_COLORS", fonts = "PART_FONTS", sizes = "PART_SIZES" }
-Styles.SECTION_LABELS = { health = "MODULE_HEALTH", rage = "MODULE_RAGE", swing = "MODULE_SWING", stance = "MODULE_STANCE" }
+Styles.SECTION_LABELS = { health = "MODULE_HEALTH", rage = "MODULE_RAGE", swing = "MODULE_SWING", cast = "MODULE_CAST", stance = "MODULE_STANCE" }
 
 -- Setting keys covered by each part (dotted keys are nested settings).
 local BAR_KEYS = {
@@ -57,6 +57,12 @@ local KEYS = {
 		fonts = BAR_KEYS.fonts,
 		sizes = { "width", "height", "spacing" },
 		colors = { "textColor", "colorMainHand", "colorOffHand", "colorRanged" },
+	},
+	cast = {
+		look = BAR_KEYS.look,
+		fonts = BAR_KEYS.fonts,
+		sizes = BAR_KEYS.sizes,
+		colors = { "textColor", "colorCast", "colorChannel", "colorSuccess", "colorFailed" },
 	},
 	stance = {
 		look = { "buttonStyle", "borderColor" },
@@ -367,6 +373,47 @@ Styles.data = {
 		},
 	},
 }
+
+-- Cast bar ---------------------------------------------------------------------------------------
+-- Forever uses the game's own casting bar art (its fill atlas already holds
+-- the colors, so the fill colors stay white). The other styles take their
+-- swing timer look, their health bar size and the classic casting colors,
+-- tinted for the themed styles.
+Styles.data.Forever.cast = {
+	look = { texture = "ForeverCast", borderStyle = "ForeverCast", spark = true },
+	fonts = { fontOutline = "NONE", fontShadow = true, textAlign = "RIGHT" },
+	colors = { textColor = WHITE, colorCast = WHITE, colorChannel = WHITE, colorSuccess = WHITE, colorFailed = WHITE },
+	sizes = { width = 220, height = 16 },
+}
+local CAST_COLORS = {
+	default = { colorCast = c(1, 0.7, 0), colorChannel = c(0, 0.8, 0.2), colorSuccess = c(0, 1, 0), colorFailed = c(1, 0, 0) },
+	HighVisibility = { colorCast = c(1, 1, 0), colorChannel = c(0, 1, 0.4) },
+	Ember = { colorCast = c(1, 0.45, 0.08), colorChannel = c(1, 0.7, 0.2), colorSuccess = c(1, 0.85, 0.3) },
+	Frost = { colorCast = c(0.45, 0.75, 1), colorChannel = c(0.6, 0.9, 1), colorSuccess = c(0.85, 0.97, 1) },
+	Gladiator = { colorCast = c(0.95, 0.75, 0.3), colorSuccess = c(1, 0.9, 0.5) },
+	Berserker = { colorCast = c(1, 0.5, 0.1), colorChannel = c(0.85, 0.25, 0.1), colorFailed = c(0.6, 0, 0) },
+	Void = { colorCast = c(0.65, 0.35, 1), colorChannel = c(0.45, 0.3, 0.95), colorSuccess = c(0.85, 0.6, 1) },
+}
+for name, style in pairs(Styles.data) do
+	if not style.cast then
+		local swing = style.swing or {}
+		local health = style.health or {}
+		local colors = { textColor = (swing.colors and swing.colors.textColor) or WHITE }
+		for key, value in pairs(CAST_COLORS.default) do
+			colors[key] = value
+		end
+		for key, value in pairs(CAST_COLORS[name] or {}) do
+			colors[key] = value
+		end
+		local size = health.sizes or { width = 220, height = 14 }
+		style.cast = {
+			look = swing.look,
+			fonts = { textAlign = "RIGHT" },
+			colors = colors,
+			sizes = { width = size.width, height = math.max(12, size.height) },
+		}
+	end
+end
 
 -- Bar text is centered unless a style says otherwise.
 for _, style in pairs(Styles.data) do

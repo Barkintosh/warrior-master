@@ -608,6 +608,7 @@ function UI.Button(page, o)
 		reset()
 		o.onClick()
 		page:Refresh()
+		ns.Flair:OnButton(o, b)
 	end)
 	b:SetScript("OnEnter", function(self)
 		self:SetBackdropColor(Theme.Color("fieldHover"))
@@ -788,6 +789,82 @@ function UI.Text(page, o)
 	return control
 end
 
+-- Reorderable list ----------------------------------------------------------------------------------------
+-- One row per item, top to bottom, with an up and a down arrow.
+-- o: items() -> { { value, text, dim } } in the current order,
+--    move(value, step) with step -1 (up) or +1 (down), count, disabled()
+local ORDER_ROW = 22
+local ARROW_TEXTURES = {
+	up = "Interface\\Buttons\\UI-ScrollBar-ScrollUpButton-",
+	down = "Interface\\Buttons\\UI-ScrollBar-ScrollDownButton-",
+}
+
+local function orderArrow(parent, dir)
+	local b = CreateFrame("Button", nil, parent)
+	b:SetSize(18, 18)
+	local base = ARROW_TEXTURES[dir]
+	b:SetNormalTexture(base .. "Up")
+	b:SetPushedTexture(base .. "Down")
+	b:SetDisabledTexture(base .. "Disabled")
+	b:SetHighlightTexture(base .. "Highlight", "ADD")
+	return b
+end
+
+function UI.OrderList(page, o)
+	local f = CreateFrame("Frame", nil, page.content)
+	local control = newControl(page, f, ORDER_ROW * (o.count or 5))
+	control.kind = "order"
+	control.rows = {}
+
+	local function makeRow(i)
+		local row = CreateFrame("Frame", nil, f, "BackdropTemplate")
+		row:SetHeight(ORDER_ROW - 2)
+		Theme.Border(row)
+		row.index = Theme.Text(row, Theme.SIZE_SMALL, "dim")
+		row.index:SetPoint("LEFT", 6, 0)
+		row.label = Theme.Text(row, Theme.SIZE_TEXT)
+		row.label:SetPoint("LEFT", 24, 0)
+		row.down = orderArrow(row, "down")
+		row.down:SetPoint("RIGHT", -2, 0)
+		row.up = orderArrow(row, "up")
+		row.up:SetPoint("RIGHT", row.down, "LEFT", -2, 0)
+		control.rows[i] = row
+		return row
+	end
+
+	function control.Refresh()
+		local items = o.items()
+		local disabled = isDisabled(o)
+		for i, item in ipairs(items) do
+			local row = control.rows[i] or makeRow(i)
+			row:ClearAllPoints()
+			row:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -(i - 1) * ORDER_ROW)
+			row:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -(i - 1) * ORDER_ROW)
+			row.index:SetText(i .. ".")
+			row.label:SetText(item.text)
+			row.label:SetTextColor(Theme.Color(item.dim and "dim" or "text"))
+			row.up:SetEnabled(not disabled and i > 1)
+			row.down:SetEnabled(not disabled and i < #items)
+			row.up:SetScript("OnClick", function()
+				if not isDisabled(o) and o.move(item.value, -1) ~= false then
+					page:Refresh()
+				end
+			end)
+			row.down:SetScript("OnClick", function()
+				if not isDisabled(o) and o.move(item.value, 1) ~= false then
+					page:Refresh()
+				end
+			end)
+			row:Show()
+		end
+		for i = #items + 1, #control.rows do
+			control.rows[i]:Hide()
+		end
+		setDimmed(f, disabled)
+	end
+	return control
+end
+
 -- Page and layout --------------------------------------------------------------------------------------------
 -- Controls flow left to right on a 6-unit grid: sliders, dropdowns and text
 -- fields take half a row; checkboxes, color swatches and buttons take a
@@ -917,6 +994,7 @@ function Page:Button(o, full) return self:Place(UI.Button(self, o), full) end
 function Page:EditBox(o, full) return self:Place(UI.EditBox(self, o), full) end
 function Page:TextArea(o) return self:Place(UI.TextArea(self, o), true) end
 function Page:Text(o) return self:Place(UI.Text(self, o), true) end
+function Page:OrderList(o, full) return self:Place(UI.OrderList(self, o), full or 3) end
 function Page:Note(text, color) return self:Place(UI.Text(self, { text = text, color = color or "dim", size = Theme.SIZE_SMALL }), true) end
 
 --- Ends the current row (the rest of it stays empty).

@@ -183,7 +183,7 @@ function ns.CreateResourceModule(def)
 		if def.position and def.position(self, cfg) then
 			bar:SetClampedToScreen(cfg.clamp and ns.db.profile.general.clampAll)
 		else
-			ns.PlaceFrame(bar, cfg.point, cfg.clamp)
+			ns.PlaceModuleFrame(self.key, bar, cfg)
 		end
 		self.colorCurve = ns.BuildResourceColorCurve(cfg)
 		self.alertCurve = ns.BuildAlertCurve(cfg.alert.threshold / 100, def.alertDirection)

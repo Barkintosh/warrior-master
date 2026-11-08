@@ -195,7 +195,7 @@ test("without SharedMedia only built-in media is listed", function()
 		check(not item.value:find("lsm:", 1, true), "no shared entries")
 		count = count + 1
 	end
-	eq(count, 7, "seven built-in textures")
+	eq(count, 8, "eight built-in textures")
 	eq(#NS.Media.ListFonts(), 10, "ten built-in fonts")
 end)
 

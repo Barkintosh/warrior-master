@@ -158,11 +158,13 @@ function Config:Create()
 	self.lockButton = footerButton(footer, function()
 		ns.DB:Set("general.locked", not ns.db.profile.general.locked)
 		Config:RefreshCurrent()
+		ns.Flair:OnButton(nil, Config.lockButton)
 	end)
 	self.lockButton:SetPoint("LEFT", 14, 0)
 	self.testButton = footerButton(footer, function()
 		ns.TestMode:Toggle()
 		Config:RefreshCurrent()
+		ns.Flair:OnButton(nil, Config.testButton)
 	end)
 	self.testButton:SetPoint("LEFT", self.lockButton, "RIGHT", 10, 0)
 	self.footerText = Theme.Text(footer, Theme.SIZE_SMALL, "warn")
@@ -365,8 +367,9 @@ function Config:Show()
 end
 
 function Config:Hide()
-	if self.frame then
+	if self.frame and self.frame:IsShown() then
 		self.frame:Hide()
+		ns.Flair:Shout(self.frame)
 	end
 end
 

@@ -117,3 +117,29 @@ test("client swing option button sets the CVar out of combat only", function()
 	check(swing():EnableClientSwingTimer(), "enabled out of combat")
 	eq(Mock.cvars.showSwingTimer, "1", "CVar on")
 end)
+
+test("weapon filter shows the timer only with the chosen kind of weapon", function()
+	WM.Boot({ state = { inventory = { [16] = 1001, [17] = 2001 } } })
+	NS.DB:Set("swing.visibility", "always")
+	local frame = WarriorMasterSwingFrame
+	check(frame:IsShown(), "any weapon: shown with a one-hander")
+	NS.DB:Set("swing.weaponFilter", "twoHand")
+	check(not frame:IsShown(), "two-handed only: hidden with a one-hander")
+	Mock.state.inventory = { [16] = 1002 }
+	Mock.FireEvent("PLAYER_EQUIPMENT_CHANGED", 16, true)
+	check(frame:IsShown(), "two-handed only: shown with a two-hander")
+	NS.DB:Set("swing.weaponFilter", "oneHand")
+	check(not frame:IsShown(), "one-handed only: hidden with a two-hander")
+	Mock.state.inventory = { [16] = 1001, [17] = 2002 }
+	Mock.FireEvent("WEAPON_SLOT_CHANGED")
+	check(frame:IsShown(), "one-handed only: shown when dual wielding")
+	Mock.state.inventory = {}
+	Mock.FireEvent("PLAYER_EQUIPMENT_CHANGED", 16, false)
+	check(not frame:IsShown(), "no weapon matches neither filter")
+	NS.Movers:SetShown(true)
+	check(frame:IsShown(), "always shown while moving frames")
+	NS.Movers:SetShown(false)
+	Mock.state.inventory = { [16] = 9999 } -- item information not readable
+	Mock.FireEvent("PLAYER_EQUIPMENT_CHANGED", 16, true)
+	check(frame:IsShown(), "unknown weapon kind: never hidden on a guess")
+end)

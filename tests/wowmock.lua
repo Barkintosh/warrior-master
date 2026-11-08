@@ -158,6 +158,12 @@ local PROTECTED_OPS = {
 	StartMoving = true, StopMovingOrSizing = true, SetUserPlaced = true, Click = true,
 }
 
+-- Methods Blizzard documents as protected (IsProtectedFunction) are blocked
+-- on secure frames in combat, in addition to the list above.
+for name in pairs(API and API.protected_methods or {}) do
+	PROTECTED_OPS[name] = true
+end
+
 local function isProtectedFamily(o)
 	if o.__protected then
 		return true
@@ -908,6 +914,91 @@ function EditMacro(index, name, icon, body)
 	end
 	Mock.macros[index] = { name = name, icon = icon, body = body }
 	return index
+end
+
+-- Casting (player only). Mock.StartCast / StartChannel set what
+-- UnitCastingInfo / UnitChannelInfo return; times are in milliseconds.
+S.cast, S.channel = nil, nil
+local function castReturns(c, channel)
+	if not c then
+		return nil
+	end
+	local function v(x)
+		return c.secret and Mock.Secret(x) or x
+	end
+	if channel then
+		-- name, text, texture, startTimeMs, endTimeMs, isTradeskill, notInterruptible, spellID
+		return v(c.name), v(c.name), v(c.icon), v(c.start), v(c.finish), false, v(false), v(c.spellID or 0)
+	end
+	-- name, text, texture, startTimeMs, endTimeMs, isTradeskill, castID, notInterruptible, spellID
+	return v(c.name), v(c.name), v(c.icon), v(c.start), v(c.finish), false, v(c.castID), v(false), v(c.spellID or 0)
+end
+function UnitCastingInfo(unit)
+	if unit ~= "player" then
+		return nil
+	end
+	return castReturns(S.cast, false)
+end
+function UnitChannelInfo(unit)
+	if unit ~= "player" then
+		return nil
+	end
+	return castReturns(S.channel, true)
+end
+local castCounter = 0
+--- Starts a cast of `seconds` now and fires UNIT_SPELLCAST_START. Returns its GUID.
+function Mock.StartCast(name, seconds, opts)
+	opts = opts or {}
+	castCounter = castCounter + 1
+	local now = GetTime() * 1000
+	local guid = "Cast-3-0-0-0-" .. castCounter
+	S.cast = { name = name, icon = opts.icon or 134414, start = now, finish = now + seconds * 1000, castID = guid, secret = opts.secret }
+	Mock.FireEvent("UNIT_SPELLCAST_START", "player", guid, opts.spellID or 8690)
+	return guid
+end
+function Mock.StartChannel(name, seconds, opts)
+	opts = opts or {}
+	local now = GetTime() * 1000
+	S.channel = { name = name, icon = opts.icon or 133685, start = now, finish = now + seconds * 1000, secret = opts.secret }
+	Mock.FireEvent("UNIT_SPELLCAST_CHANNEL_START", "player", "Cast-3-0-0-0-0", opts.spellID or 746)
+end
+
+-- Action bars: Mock.actions[slot] = { kind, index, text }.
+Mock.actions = {}
+C_ActionBar = C_ActionBar or {}
+local function checkSlot(slot)
+	if type(slot) ~= "number" or slot < 1 or slot > 180 or slot % 1 ~= 0 then
+		error("invalid action slot " .. tostring(slot), 3)
+	end
+end
+function C_ActionBar.HasAction(slot)
+	checkSlot(slot)
+	return Mock.actions[slot] ~= nil
+end
+function C_ActionBar.GetActionText(slot)
+	checkSlot(slot)
+	local a = Mock.actions[slot]
+	return a and a.text or nil
+end
+function C_ActionBar.PutActionInSlot(slot)
+	checkSlot(slot)
+	if not Mock.cursor then
+		return
+	end
+	local old = Mock.actions[slot]
+	local c = Mock.cursor
+	local macro = c.kind == "macro" and Mock.macros[c.index]
+	Mock.actions[slot] = { kind = c.kind, index = c.index, text = macro and macro.name or nil }
+	Mock.cursor = old and { kind = old.kind, index = old.index } or nil
+end
+function GetCursorInfo()
+	if Mock.cursor then
+		return Mock.cursor.kind, Mock.cursor.index
+	end
+	return nil
+end
+function ClearCursor()
+	Mock.cursor = nil
 end
 
 -- Sound / CVars / misc

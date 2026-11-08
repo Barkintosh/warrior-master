@@ -10,6 +10,9 @@ Positioning: drag and drop, screen anchors, clamping, global offset.
 - "Keep on screen" (clamping) can be set per module and for everything.
 - When frames are unlocked, each one gets a translucent overlay to drag it
   (right-click resets it), plus one "All modules" handle that moves the group.
+- With the automatic layout on (Widgets/Layout.lua), dragging any module
+  moves the whole stack (the global offset), and right-click puts the stack
+  back in its default place.
 
 Secure frames (the stance bar) only move out of combat: their overlay
 refuses to start a drag in combat, and every mover is locked again as soon
@@ -146,6 +149,7 @@ function Movers:Register(frame, opts)
 			return
 		end
 		entry.moving = true
+		entry.startX, entry.startY = anchorCoords(frame, "TOPLEFT", nil)
 		frame:StartMoving()
 	end)
 	overlay:SetScript("OnDragStop", function()
@@ -156,11 +160,29 @@ function Movers:Register(frame, opts)
 		frame:StopMovingOrSizing()
 		-- Positions live in the profile, not in the client's layout cache.
 		pcall(frame.SetUserPlaced, frame, false)
+		local key = not entry.raw and ns.Layout:KeyForFrame(frame)
+		if key and ns.Layout:Manages(key) then
+			-- Part of the automatic layout: move the whole stack.
+			local x, y = anchorCoords(frame, "TOPLEFT", nil)
+			local gx, gy = globalOffset()
+			if x and entry.startX then
+				ns.DB:Set("general.offsetX", math.floor(gx + x - entry.startX + 0.5))
+				ns.DB:Set("general.offsetY", math.floor(gy + y - entry.startY + 0.5))
+			end
+			ns.Layout:Request()
+			return
+		end
 		savePosition(entry)
 	end)
 	overlay:SetScript("OnMouseUp", function(_, button)
 		if button == "RightButton" and entry.resetPoint then
 			if entry.isSecure and ns.Compat.InCombatLockdown() then
+				return
+			end
+			local key = not entry.raw and ns.Layout:KeyForFrame(frame)
+			if key and ns.Layout:Manages(key) then
+				ns.DB:Set("general.offsetX", 0)
+				ns.DB:Set("general.offsetY", 0)
 				return
 			end
 			entry.resetPoint()

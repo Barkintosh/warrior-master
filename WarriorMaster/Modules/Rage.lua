@@ -20,7 +20,8 @@ local function healthAnchor()
 end
 
 local function isAttached(cfg)
-	return cfg.attach.enabled and healthAnchor() ~= nil
+	-- The automatic layout places the rage bar itself when it is on.
+	return cfg.attach.enabled and not ns.Layout:Manages("rage") and healthAnchor() ~= nil
 end
 
 Rage = ns.CreateResourceModule({

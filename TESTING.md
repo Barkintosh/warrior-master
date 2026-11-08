@@ -27,7 +27,7 @@ python tests/run_tests.py
 | 2. TOC | `## Interface: 16001`; every listed file exists; no Lua file is left out. |
 | 3. Locales | `frFR` defines exactly the `enUS` keys; `%d`/`%s` placeholders match; every string the code uses exists. |
 | 4. Static audit (`tools/audit.py`) | No forbidden API (automation, code execution, combat log, chat, bindings, hooks, CVars); no `:Click()`; every global call, `C_` API and registered event exists in Forever 1.60.1.70862. Also runs a self-test proving the audit catches 11 kinds of violation. |
-| 5. Behaviour tests (`tests/test_*.lua`) | Thirteen test files, run against the mock in `tests/wowmock.lua` (see below). |
+| 5. Behaviour tests (`tests/test_*.lua`) | Sixteen test files, run against the mock in `tests/wowmock.lua` (see below). |
 
 What the mock (`tests/wowmock.lua`) enforces:
 - **Widget methods:** every PascalCase method the addon calls must be in Blizzard's documented widget API for 1.60.1 (`tests/data/forever_api.lua`) or in a short list of verified Blizzard mixins. Anything else raises an error.
@@ -37,7 +37,7 @@ What the mock (`tests/wowmock.lua`) enforces:
 - **Global writes:** every global the addon writes is recorded and compared with the allowed list.
 
 ### Latest offline result
-Run on 2026-11-08 against API data for build 1.60.1.70862: **130 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 118 behaviour tests in 13 files. The suite covers:
+Run on 2026-11-08 against API data for build 1.60.1.70862: **162 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 150 behaviour tests in 16 files. The suite covers:
 - **Boot:** loads on Warriors only; creates only its saved variables, slash command and key-binding labels as globals; disabled modules release their events and actions; Options entry and Escape handler.
 - **Bars:** readable values and threshold colors; other power types ignored; hidden values go to widgets with no Lua math; the client's curves drive color and glow; the color curve matches the Lua color rules; low-health sound is edge-triggered and throttled; sound pauses while values are hidden; visibility and opacity rules; attachment to the health bar; preview mode switches off when combat starts.
 - **Swing:** progress and countdown; updater stops when idle; off-hand bar only with an off-hand weapon; hidden or invalid durations ignored; haste rescale; no rescale when attack speed is hidden; weapon-swap restart; sound; range check off by default; disabled module ignores swings; game-option button refused in combat.
@@ -99,6 +99,28 @@ Run on 2026-11-08 against API data for build 1.60.1.70862: **130 passed, 0 faile
   - the minimap button sits on the edge, opens the settings, locks and unlocks, can be dragged and hidden;
   - the compartment entry opens the settings;
   - nothing appears on other classes.
+- **Cast bar:**
+  - a cast shows its name, icon, progress and time, fills when it ends and fades;
+  - a channel empties, and an interrupted channel shows it;
+  - another spell failing mid-cast leaves the bar alone, our own interrupt or failure is shown;
+  - hidden cast timing draws nothing and raises no error;
+  - pushback moves the end time;
+  - a cast already running at login is picked up;
+  - the bar ends by itself if the stop event never comes;
+  - preview mode, the move placeholder, the Forever casting-bar art for each state, and all 11 styles.
+- **Swing timer weapon filter:** any weapon, two-handed only, one-handed only (dual wield included), no weapon, frames unlocked, and an unreadable weapon (never hidden).
+- **Automatic layout:**
+  - off by default;
+  - stacks every module top to bottom with the gap, each anchored to the screen;
+  - reorder with the arrows, and switched-off modules take no room;
+  - saved or imported orders are repaired;
+  - in combat the stance bar waits and the other bars follow, with no protected call, and switching the layout off mid-fight puts it back in its own place;
+  - dragging any bar moves the whole stack, and right-click puts it back;
+  - an attached rage bar is placed by the layout;
+  - the module pages say the layout places them.
+- **Stance macros onto an action bar:** one button; three macros side by side on a shown bar; an existing action is never replaced; a second click is harmless; only missing macros are placed; hidden bars are a last resort; full bars are reported; refused in combat or with something on the cursor.
+- **Weapon picker:** only weapons, with no macro, binding or hint text.
+- **Warrior effects:** execute splash on a button press (chance 100), never at chance 0, always on a confirmed reset, battle cry on closing, the Sound switch silences them, the switch turns them off, the try button fires once, and nothing keeps running afterwards.
 - **Escape and taint:**
   - nothing is ever added to Blizzard's Escape handler list or `UISpecialFrames`;
   - Escape closes the dropdown, then the window, without reaching the game;
@@ -238,6 +260,19 @@ Each test lists what to do, what you should see, and what counts as a failure.
   - Change a module's screen anchor: it must not jump.
   - Turn off "Keep on screen" and drag a bar half off screen; turn it on again and it comes back.
 - **Fonts:** try each font style and each font. Note any font that shows boxes instead of letters, especially accented letters in French.
+
+### T10e - Cast bar, layout, action bar placement and warrior fun (1.2.0)
+- **Cast bar:** cast Hearthstone. The bar shows its icon, name and time left, fills, then fades. Move while casting: it shows "Interrupted".
+  - Eat or drink, or use a bandage: the bar empties as the channel runs.
+  - Press another ability while casting: the bar keeps going.
+  - `/warrior diag` shows the cast counts and how many casts had hidden timing.
+- **Swing filter:** set Swing Timer > Show with > Two-handed weapons only. With a one-hander the timer disappears; equip a two-hander and it comes back.
+- **Layout:** General > Layout, tick the switch. The bars stack with an even gap. Use the arrows to reorder, change the gap and the alignment.
+  - Unlock the frames and drag any bar: the whole stack moves.
+  - Change the order in combat: the stance bar moves when combat ends, with no error.
+- **Action bar:** turn on the bottom left bar in the game's options. On the Stances page, click **Put the stance macros on an action bar**. The three WM macros land side by side in empty slots and nothing else on the bar changes. Click it again: it says they are already there.
+- **Weapon window:** right-click a stance button. It shows only weapon icons (and sets), with no text below them.
+- **Warrior fun:** on the General page, click **Execute!**: sound, blood and a battle line. Close the settings: war horn and battle cry. Untick the switch: silence.
 
 ### T10d - Stance macros and minimap button (1.1.0)
 - **Stance macros:** log in, open `/macro` and go to the Character tab. You should see WM Battle, WM Defensive and WM Berserker, only for the stances you know, and only once even after `/reload`.

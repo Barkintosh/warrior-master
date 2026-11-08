@@ -25,7 +25,7 @@ test("every settings page builds and refreshes without errors", function()
 		check(#def.instance.controls > 0, def.key .. " has controls")
 		def.instance:Refresh()
 	end
-	eq(#NS.Config.pages, 8, "eight pages")
+	eq(#NS.Config.pages, 9, "nine pages")
 end)
 
 test("checkbox toggles a profile setting", function()

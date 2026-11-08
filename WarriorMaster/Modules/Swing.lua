@@ -14,6 +14,9 @@ addons cannot read on WoW Forever) and nothing is approximated.
 - Weapon swaps: WEAPON_SLOT_CHANGED restarts a running swing with the new
   weapon speed when it is readable (as Blizzard's own timer does), otherwise
   the bar is cleared and waits for the next PLAYER_SWING.
+- Weapon filter: the timer can be limited to two-handed or one-handed main
+  hands. The kind comes from the item's equip location
+  (C_Item.GetItemInfoInstant); when it cannot be read the timer stays shown.
 - Enemy swing timer: UNSUPPORTED on this client (would need the combat log).
 - The OnUpdate script only runs while at least one swing is in progress.
 ]]
@@ -75,6 +78,29 @@ local function hasWeapon(t)
 	local _, _, _, _, _, classID = Compat.GetItemInfoInstant(itemID)
 	return classID == WEAPON_CLASS
 end
+
+local ONE_HAND_LOCS = { INVTYPE_WEAPON = true, INVTYPE_WEAPONMAINHAND = true }
+
+--- Kind of the equipped main hand: "twoHand", "oneHand", "none" (no weapon),
+-- or nil when the item information cannot be read.
+local function mainHandKind()
+	local itemID = Compat.GetInventoryItemID(16)
+	if not itemID then
+		return "none"
+	end
+	local _, _, _, equipLoc, _, classID = Compat.GetItemInfoInstant(itemID)
+	if equipLoc == "INVTYPE_2HWEAPON" then
+		return "twoHand"
+	end
+	if ONE_HAND_LOCS[equipLoc] then
+		return "oneHand"
+	end
+	if classID ~= nil and classID ~= WEAPON_CLASS then
+		return "none"
+	end
+	return nil
+end
+Swing.MainHandKind = mainHandKind
 
 -- Frames ---------------------------------------------------------------------------------------
 function Swing:OnInitialize()
@@ -144,7 +170,7 @@ function Swing:ApplySettings()
 	end
 	local cfg = self:GetConfig()
 	self.holder:SetScale(cfg.scale)
-	ns.PlaceFrame(self.holder, cfg.point, cfg.clamp)
+	ns.PlaceModuleFrame("swing", self.holder, cfg)
 	for _, t in ipairs(TYPES) do
 		local bar = self.bars[t.key]
 		bar:ApplyStyle(cfg, { width = cfg.width, height = cfg.height, variant = t.key })
@@ -206,13 +232,26 @@ function Swing:IsTypeShown(t)
 	return true
 end
 
+--- Whether the equipped main hand matches the weapon filter.
+function Swing:WeaponFilterPasses()
+	local filter = self:GetConfig().weaponFilter
+	if filter == "any" or ns.state.testMode or ns.state.moversShown then
+		return true
+	end
+	local kind = self.mainHandKind
+	if kind == nil then
+		return true -- unknown: never hide on a guess
+	end
+	return kind == filter
+end
+
 function Swing:UpdateVisibility()
 	local cfg = self:GetConfig()
 	if not self.enabled or self.unsupported or not cfg then
 		self.holder:Hide()
 		return
 	end
-	self.holder:SetShown(ns:ShouldShow(cfg.visibility))
+	self.holder:SetShown(ns:ShouldShow(cfg.visibility) and self:WeaponFilterPasses())
 	self.holder:SetAlpha(ns:CurrentAlpha(cfg))
 end
 
@@ -428,6 +467,13 @@ end
 function Swing:UpdateWeapons()
 	for _, t in ipairs(TYPES) do
 		self.weapons[t.key] = hasWeapon(t)
+	end
+	self.mainHandKind = mainHandKind()
+	-- The automatic layout keeps room for the bars these weapons can show.
+	local signature = (self.weapons.oh and "1" or "0") .. (self.weapons.ranged and "1" or "0")
+	if signature ~= self.weaponSignature then
+		self.weaponSignature = signature
+		ns.Layout:Request()
 	end
 end
 

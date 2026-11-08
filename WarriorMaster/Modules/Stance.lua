@@ -577,6 +577,149 @@ function Stance:PickupMacro(key)
 	return true, message
 end
 
+-- Action bars that stay the same in every stance: bottom left, bottom right,
+-- right and left (pages 6, 5, 3 and 4 in Blizzard_ActionBar/Shared/
+-- MultiActionBars.lua). The main bar is skipped: a Warrior's main bar
+-- changes with the stance.
+Stance.ACTION_BARS = {
+	{ frame = "MultiBarBottomLeft", first = 61, labelKey = "BAR_BOTTOMLEFT" },
+	{ frame = "MultiBarBottomRight", first = 49, labelKey = "BAR_BOTTOMRIGHT" },
+	{ frame = "MultiBarRight", first = 25, labelKey = "BAR_RIGHT" },
+	{ frame = "MultiBarLeft", first = 37, labelKey = "BAR_LEFT" },
+}
+local SLOTS_PER_BAR = 12
+local MAX_ACTION_SLOT = 120
+
+--- True when a slot holds an action (or cannot be read: never overwrite).
+local function slotTaken(slot)
+	local ok, has = pcall(C_ActionBar.HasAction, slot)
+	if not ok or Compat.IsSecret(has) then
+		return true
+	end
+	return has == true
+end
+
+local function slotText(slot)
+	if type(C_ActionBar.GetActionText) ~= "function" then
+		return nil
+	end
+	local ok, text = pcall(C_ActionBar.GetActionText, slot)
+	if ok and not Compat.IsSecret(text) and type(text) == "string" then
+		return text
+	end
+	return nil
+end
+
+--- Action slot already holding the macro with this name, or nil.
+function Stance:FindMacroSlot(name)
+	for slot = 1, MAX_ACTION_SLOT do
+		if slotText(slot) == name and slotTaken(slot) then
+			return slot
+		end
+	end
+	return nil
+end
+
+--- Empty slots for count actions on one bar: consecutive when possible.
+local function freeSlots(bar, count)
+	local run = {}
+	for slot = bar.first, bar.first + SLOTS_PER_BAR - 1 do
+		if slotTaken(slot) then
+			run = {}
+		else
+			run[#run + 1] = slot
+			if #run == count then
+				return run
+			end
+		end
+	end
+	local any = {}
+	for slot = bar.first, bar.first + SLOTS_PER_BAR - 1 do
+		if not slotTaken(slot) then
+			any[#any + 1] = slot
+			if #any == count then
+				return any
+			end
+		end
+	end
+	return nil
+end
+
+local function barShown(bar)
+	local frame = _G[bar.frame]
+	return type(frame) == "table" and type(frame.IsShown) == "function" and frame:IsShown() == true
+end
+
+--- Puts the stance macros that are not on a bar yet into empty slots of one
+-- action bar: a bar that is shown if one has room, else a hidden one (the
+-- message then says to turn that bar on). Runs on the player's click only,
+-- out of combat; it never replaces or removes an action.
+-- Returns ok, message.
+function Stance:PlaceMacrosOnBar()
+	local L = ns.L
+	if Compat.InCombatLockdown() then
+		return false, L.MACRO_ERR_COMBAT
+	end
+	if type(C_ActionBar) ~= "table" or type(C_ActionBar.PutActionInSlot) ~= "function"
+		or type(C_ActionBar.HasAction) ~= "function" or type(PickupMacro) ~= "function" then
+		return false, L.MACRO_BAR_UNAVAILABLE
+	end
+	if type(GetCursorInfo) == "function" and GetCursorInfo() ~= nil then
+		return false, L.MACRO_BAR_CURSOR
+	end
+	local missing = {}
+	for _, form in ipairs(self:ReadForms()) do
+		if not self:FindMacroSlot(self.MACRO_NAMES[form.key]) then
+			missing[#missing + 1] = form.key
+		end
+	end
+	if #missing == 0 then
+		return true, L.MACRO_BAR_ALREADY
+	end
+	local target, slots
+	for _, wantShown in ipairs({ true, false }) do
+		for _, bar in ipairs(self.ACTION_BARS) do
+			if barShown(bar) == wantShown then
+				slots = freeSlots(bar, #missing)
+				if slots then
+					target = bar
+					break
+				end
+			end
+		end
+		if target then
+			break
+		end
+	end
+	if not target then
+		return false, L.MACRO_BAR_FULL:format(#missing)
+	end
+	local placed = 0
+	for i, key in ipairs(missing) do
+		local ok = self:PickupMacro(key)
+		if ok and type(GetCursorInfo) == "function" and GetCursorInfo() == nil then
+			ok = false -- nothing was picked up
+		end
+		if ok then
+			ok = pcall(C_ActionBar.PutActionInSlot, slots[i])
+		end
+		if type(ClearCursor) == "function" then
+			ClearCursor()
+		end
+		if ok then
+			placed = placed + 1
+		end
+	end
+	if placed == 0 then
+		return false, L.MACRO_BAR_FAILED
+	end
+	local message = L.MACRO_BAR_DONE:format(placed, L[target.labelKey])
+	if not barShown(target) then
+		message = message .. " " .. L.MACRO_BAR_HIDDEN
+	end
+	return true, message
+end
+
 --- Creates the stance macros and keeps them in line with the chosen weapons.
 -- Runs out of combat only, and only once the game has loaded the player's
 -- macros (UPDATE_MACROS), so it can never create duplicates at login.
@@ -718,7 +861,7 @@ function Stance:Configure()
 	end
 	self.bar:SetScale(cfg.scale)
 	self.bar:SetAlpha(cfg.alpha)
-	ns.PlaceFrame(self.bar, cfg.point, cfg.clamp)
+	ns.PlaceModuleFrame("stance", self.bar, cfg)
 	self.bar:SetShown(shown > 0)
 
 	self:UpdateLoadoutVisuals()

@@ -12,6 +12,7 @@ ns.TestMode = TestMode
 
 local TICK = 0.05
 local SWING_MH, SWING_OH = 2.6, 1.9
+local CAST_TIME, CAST_PAUSE = 2.5, 1.2
 
 function TestMode:IsActive()
 	return ns.state.testMode == true
@@ -43,6 +44,7 @@ function TestMode:SetActive(active, silent)
 		self.elapsed = 0
 		self.sinceTick = 0
 		self.nextMH, self.nextOH = 0, 0.4
+		self.nextCast, self.castCount = 0.2, 0
 		self:RegisterEvent("PLAYER_REGEN_DISABLED")
 		self.frame = self.frame or CreateFrame("Frame")
 		self.frame:SetScript("OnUpdate", function(_, elapsed)
@@ -83,6 +85,13 @@ function TestMode:OnUpdate(elapsed)
 			self.nextOH = self.elapsed + SWING_OH
 			swing:SimulateSwing("oh", SWING_OH)
 		end
+	end
+	local cast = ns:GetModule("cast")
+	if cast and cast.enabled and self.elapsed >= self.nextCast then
+		self.nextCast = self.elapsed + CAST_TIME + CAST_PAUSE
+		self.castCount = self.castCount + 1
+		-- Alternate a cast and a channel so both looks can be styled.
+		cast:SimulateCast(CAST_TIME, self.castCount % 2 == 0)
 	end
 end
 

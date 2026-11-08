@@ -63,7 +63,7 @@ H.TextureOptions = textureOptions
 local VISIBILITY_LABELS = { always = "VIS_ALWAYS", combat = "VIS_COMBAT", target = "VIS_TARGET", combatOrTarget = "VIS_COMBATORTARGET" }
 local SHADE_LABELS = { None = "SHADE_NONE", Gloss = "SHADE_GLOSS", Shadow = "SHADE_SHADOW" }
 local BORDER_LABELS = {
-	Forever = "BORDER_FOREVER", ForeverFrame = "BORDER_FOREVER_FRAME",
+	Forever = "BORDER_FOREVER", ForeverFrame = "BORDER_FOREVER_FRAME", ForeverCast = "BORDER_FOREVER_CAST",
 	None = "BORDER_NONE", Pixel = "BORDER_PIXEL", Tooltip = "BORDER_TOOLTIP",
 }
 local OUTLINE_LABELS = { NONE = "OUTLINE_NONE", OUTLINE = "OUTLINE_THIN", THICKOUTLINE = "OUTLINE_THICK" }
@@ -83,6 +83,7 @@ local MODULE_FRAMES = {
 	health = function(m) return m.bar end,
 	rage = function(m) return m.bar end,
 	swing = function(m) return m.holder end,
+	cast = function(m) return m.holder end,
 	stance = function(m) return m.bar end,
 }
 
@@ -188,6 +189,11 @@ end
 function H.LayoutSection(page, key, opts)
 	local L = ns.L
 	opts = opts or {}
+	-- With the automatic layout on, the General page places every module.
+	local ownDisabled = opts.positionDisabled
+	opts.positionDisabled = function()
+		return ns.Layout:Manages(key) or (ownDisabled ~= nil and ownDisabled())
+	end
 	page:Header(L.SECTION_LAYOUT)
 	H.NumberSlider(page, key .. ".width", L.WIDTH, { disabled = opts.widthDisabled })
 	H.NumberSlider(page, key .. ".height", L.HEIGHT)
@@ -210,6 +216,13 @@ function H.LayoutSection(page, key, opts)
 		end,
 	})
 	page:Skip()
+	page:Text({
+		height = 14,
+		size = 11,
+		get = function()
+			return ns.Layout:Manages(key) and L.LAYOUT_MANAGED or "", "info"
+		end,
+	})
 end
 
 function H.AppearanceSection(page, key, opts)

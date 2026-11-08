@@ -6,11 +6,12 @@ An all-in-one, lightweight addon for **Warriors** in **World of Warcraft Forever
 |---|---|
 | **Rage Bar** | Smooth rage bar with value text, threshold or gradient colors, a glow above a threshold, an optional sound, and visibility rules. It can attach to the health bar. |
 | **Health Bar** | Personal health bar with value and percent, color gradient, and a low-health glow and sound. |
-| **Swing Timer** | Main-hand, off-hand and ranged bars driven by the game's own swing event, with countdown, haste adjustment, weapon-swap restart, optional sound and optional out-of-reach dimming. |
+| **Swing Timer** | Main-hand, off-hand and ranged bars driven by the game's own swing event, with countdown, haste adjustment, weapon-swap restart, optional sound and optional out-of-reach dimming. It can show only with a two-handed or only with one-handed weapons. |
+| **Cast Bar** | Your own casts and channels, including items that cast (Hearthstone, bandages, food and drink): icon, name, time left, and a finished, failed or interrupted flash. |
 | **Stances & Weapons** | Secure buttons for Battle, Defensive and Berserker Stance. Each button can also equip the weapons (or equipment set) you choose for that stance, all in one click or key press. |
 | **Macro Builder** | 21 Warrior templates (stance dancing, Charge/Intercept, Overpower, Execute, Pummel/Shield Bash, Taunt, weapon swaps, and more), with options, live preview, validation, copy, and one-click creation. |
 
-Out of the box everything looks like WoW Forever's own interface. Eleven ready-made styles combine textures, colors and fonts, and every setting can still be changed one by one. Profiles can be per character or shared, and can be imported and exported.
+Out of the box everything looks like WoW Forever's own interface. Eleven ready-made styles combine textures, colors and fonts, and every setting can still be changed one by one. One switch stacks every bar vertically with an even gap, in the order you choose. Profiles can be per character or shared, and can be imported and exported.
 
 **Safety first:** Warrior Master never plays for you. It never reads the combat log, never acts without your click or key press, and never sends data anywhere. See [SECURITY.md](SECURITY.md).
 
@@ -62,7 +63,9 @@ The addon only activates on Warrior characters.
 - **Out of combat:** they are created and updated outside combat only.
 - **Deleting one:** a macro you delete stays deleted until you change that stance's setup again.
 - **Turning them off:** there's a switch on the Stances page.
-- **Quick placement:** the picker's stance icon and the Stances page's **Put on action bar** button put a macro on your cursor so you can drop it on a slot.
+- **One-click placement:** the Stances page's **Put the stance macros on an action bar** button puts the macros you don't have on a bar yet into empty slots, side by side, on the bottom left, bottom right, right or left bar (a bar that is shown comes first). It never replaces an action, and works out of combat only.
+
+The weapon window only switches weapons: icons per hand, and equipment sets if you have any. Nothing else.
 
 ### Key bindings
 *Options > Keybindings > AddOns > Warrior Master* lists **Stance button 1-3**. They press the stance buttons exactly like a click.
@@ -98,7 +101,7 @@ So you can, for example, take Ember's colors on top of the Forever textures. Eac
 Positions, thresholds, alerts and visibility are never changed by a style. Changing any style setting by hand makes that module **Custom**, and choosing **Custom** later brings your own look back after you've tried other styles.
 
 **Media:**
-- **Textures:** 7 bar textures (WoW Forever, WoW Forever swing, Flat, Classic, Smooth, Raid, Skills).
+- **Textures:** 8 bar textures (WoW Forever, WoW Forever swing, WoW Forever cast, Flat, Classic, Smooth, Raid, Skills).
 - **Fonts:** 10, all from the game files: Friz Quadrata, Arial Narrow, Morpheus, Skurri, plus Gothic, Damage, Page Text, Kai Brush, Hei Bold and Hei. The last six are the game's Asian fonts: great for numbers, but some accented letters may be missing.
 - **Font styles:** 12 one-click combinations of font, size, outline and shadow (WoW Forever, Classic, Clean, Crisp shadow, Fantasy, Runic, Bold, Impact, Storybook, Brush, Heavy, Large).
 - **SharedMedia:** if another addon provides LibSharedMedia, its textures and fonts appear in the lists too.
@@ -106,9 +109,18 @@ Positions, thresholds, alerts and visibility are never changed by a style. Chang
 **Positions:**
 - **Each module:** choose a screen anchor (corners, edges or center) and decide whether it stays on screen.
 - **Everything at once:** the General page moves all modules together and can keep every frame on screen. When frames are unlocked, an **All modules** handle appears; drag it to move the whole set.
+- **Automatic layout:** General page > **Layout** stacks the health, rage, swing, cast and stance bars from top to bottom:
+  - choose the gap and the alignment (left, center or right);
+  - reorder them with the arrows;
+  - modules you switch off take no room;
+  - drag any bar to move the whole stack;
+  - if you change it during a fight, the stance bar follows after combat.
+
+## Warrior fun
+In the settings window, pressing a button sometimes plays an execute sound and spills a little blood over the window with a battle line ("No mercy!"). Confirmed reset buttons always do. Closing the settings sounds a war horn with a battle cry. You can change the chance, turn off the battle cry or turn it all off on the General page. It is purely cosmetic: it follows the Sound switch and never touches the game.
 
 ## Configuration overview
-- **General:** turn modules on or off, unlock frames, reset positions, preview mode, position of all modules (move everything, keep every frame on screen), the style picker, sounds and channel, addon language (game language, English or French), diagnostics, restore defaults.
+- **General:** turn modules on or off, unlock frames, reset positions, preview mode, position of all modules (move everything, keep every frame on screen), the automatic layout (on or off, gap, alignment, order), the style picker, sounds and channel, warrior fun, addon language (game language, English or French), diagnostics, restore defaults.
 - **Health Bar / Rage Bar:**
   - visibility (always, in combat, with a target, in combat or with a target);
   - size, scale, opacity in and out of combat, screen anchor (9 points), keep on screen, precise X/Y position;
@@ -117,7 +129,8 @@ Positions, thresholds, alerts and visibility are never changed by a style. Chang
   - color mode (single, thresholds, gradient) with three colors and two thresholds;
   - alert threshold, glow, pulse and sound;
   - for the rage bar, attachment to the health bar (above or below, gap, matching width).
-- **Swing Timer:** which bars to show and their colors, fill direction, spacing, haste adjustment, swing sound, experimental out-of-reach dimming, countdown format, labels, and the game's own swing-timer option.
+- **Swing Timer:** which bars to show and their colors, which weapons it shows with (any, two-handed only, one-handed only), fill direction, spacing, haste adjustment, swing sound, experimental out-of-reach dimming, countdown format, labels, and the game's own swing-timer option.
+- **Cast Bar:** icon, spell name, fade-out, colors for casting, channeling, finished and failed, plus the same size, position, look and text options as the other bars.
 - **Stances & Weapons:**
   - style, button look (WoW Forever frame, thin border, icon only), size, spacing, layout, scale, opacity and colors;
   - weapon icons, tooltips, and the key-binding text (font, size, outline, color);
@@ -141,9 +154,10 @@ WarriorMaster/            the addon (copy this folder into Interface/AddOns)
   Core/                   init, compatibility layer, events, combat queue, security,
                           styles, schema/validation, presets, serializer, database, slash, boot
   Locales/                enUS, frFR
-  Widgets/                status bar widget, drag-and-drop movers
-  Modules/                rage, health, swing, stance, macro templates/builder, preview
-  Config/                 settings window, controls, pages
+  Widgets/                status bar widget, drag-and-drop movers, automatic layout
+  Modules/                rage, health, swing, cast bar, stance, weapon picker,
+                          macro templates/builder, preview
+  Config/                 settings window, controls, pages, warrior effects
 tests/                    offline test suite (mocked client, never the real game)
 tools/                    API extractor and static security/compatibility audit
 COMPATIBILITY.md          research on the target client and APIs
@@ -168,7 +182,8 @@ This runs a Lua 5.1 syntax check, a TOC check, locale parity, the static audit a
   - stance and weapon clicks;
   - `/equipslot item:ID` versus item names;
   - macro creation;
-  - the out-of-reach dimming.
+  - the out-of-reach dimming;
+  - the cast bar, the one-click action bar placement and the warrior sounds.
 
   These are marked *Unverified* or *Restricted* on the Safety page until confirmed.
 

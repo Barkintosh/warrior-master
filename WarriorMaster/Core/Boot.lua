@@ -37,6 +37,8 @@ function ns:SetModuleEnabled(key, enabled)
 	else
 		self:SafeCall(module.OnDisable, module)
 	end
+	-- The automatic layout closes or opens the module's place in the stack.
+	self:SafeCall(self.Layout.Request, self.Layout)
 	self.Movers:Refresh()
 end
 
@@ -63,6 +65,9 @@ ns:RegisterMessage(boot, "SETTINGS_CHANGED", function(_, _, path)
 	elseif path == "general.offsetX" or path == "general.offsetY" or path == "general.clampAll" then
 		-- Global position or clamping changed: place every module again.
 		ns.Movers:PlaceGroupHandle()
+		ns:RefreshModules()
+	elseif path == "general.layout" or path:sub(1, 15) == "general.layout." then
+		-- Layout switched on or off, new gap, alignment or order.
 		ns:RefreshModules()
 	end
 end)

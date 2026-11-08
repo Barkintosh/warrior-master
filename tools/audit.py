@@ -211,11 +211,15 @@ def audit_file(path, rel, api, problems, stats):
                 if tok in LUA_BUILTINS or tok in LUA_KEYWORDS:
                     continue
                 stats["calls"].add(tok)
+                if tok in api.get("protected", ()):
+                    problems.append("%s:%d uses %s, a protected function (Blizzard UI only)" % (rel, lineno, tok))
                 if tok not in api["functions"] and tok not in LEGACY_GLOBALS:
                     problems.append("%s:%d calls %s, which is not a known WoW Forever API" % (rel, lineno, tok))
             if tok.startswith("C_") and nxt == "." and idx + 2 < len(tokens):
                 name = tok + "." + tokens[idx + 2]
                 stats["namespaced"].add(name)
+                if name in api.get("protected", ()):
+                    problems.append("%s:%d uses %s, a protected function (Blizzard UI only)" % (rel, lineno, name))
                 if name not in api["functions"]:
                     problems.append("%s:%d uses %s, which is not documented for WoW Forever" % (rel, lineno, name))
 
@@ -246,6 +250,7 @@ SELF_TEST_BAD = {
     "escape handler": "RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, fn)",
     "special frames": "table.insert(UISpecialFrames, 'MyFrame')",
     "stop targeting": "SpellStopTargeting()",
+    "protected call": "C_TooltipComparison.CompareItem(a, b)",
 }
 SELF_TEST_GOOD = "local x = math.floor(1.5) -- CastSpellByName in a comment\nlocal s = 'CastSpellByID in a string'\nprint(x, s)"
 
@@ -278,7 +283,7 @@ def run(root):
     files = sorted(glob.glob(os.path.join(root, "WarriorMaster", "**", "*.lua"), recursive=True))
     for path in files:
         audit_file(path, os.path.relpath(path, root).replace("\\", "/"), api, problems, stats)
-    security = [p for p in problems if "uses" in p and "not documented" not in p or ":Click()" in p or "references" in p]
+    security = [p for p in problems if ("uses" in p and "not documented" not in p) or ":Click()" in p or "references" in p or "protected function" in p]
     compat = [p for p in problems if p not in security]
     yield (not security, "no forbidden APIs, programmatic clicks or combat-log access (%d files)" % len(files), "\n".join(security))
     yield (not compat, "%d global calls, %d C_ APIs and %d events exist on WoW Forever 1.60.1"

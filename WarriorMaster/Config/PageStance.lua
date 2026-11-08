@@ -61,20 +61,31 @@ ns.Config:RegisterPage({
 		H.NumberSlider(page, "stance.spacing", L.STANCE_SPACING)
 		H.NumberSlider(page, "stance.scale", L.SCALE)
 		H.NumberSlider(page, "stance.alpha", L.ALPHA_COMBAT)
-		H.AnchorDropdown(page, "stance")
+		local function inLayout()
+			return ns.Layout:Manages("stance")
+		end
+		H.AnchorDropdown(page, "stance", { disabled = inLayout })
 		H.Check(page, "stance.clamp", L.CLAMP)
 		page:Skip()
 		local getX, setX = UI.BindPoint("stance.point", "x")
 		local getY, setY = UI.BindPoint("stance.point", "y")
-		page:Slider({ label = L.POS_X, min = -1500, max = 1500, step = 1, get = getX, set = setX })
-		page:Slider({ label = L.POS_Y, min = -1000, max = 1000, step = 1, get = getY, set = setY })
+		page:Slider({ label = L.POS_X, min = -1500, max = 1500, step = 1, get = getX, set = setX, disabled = inLayout })
+		page:Slider({ label = L.POS_Y, min = -1000, max = 1000, step = 1, get = getY, set = setY, disabled = inLayout })
 		page:Button({
 			text = L.RESET_POSITION,
+			disabled = inLayout,
 			onClick = function()
 				ns.DB:Set("stance.point", S.profile.stance.point.default)
 			end,
 		})
 		page:Skip()
+		page:Text({
+			height = 14,
+			size = 11,
+			get = function()
+				return inLayout() and L.LAYOUT_MANAGED or "", "info"
+			end,
+		})
 
 		page:Header(L.SECTION_APPEARANCE)
 		H.EnumDropdown(page, "stance.buttonStyle", L.BUTTON_STYLE,
@@ -106,6 +117,18 @@ ns.Config:RegisterPage({
 		H.Check(page, "stance.useItemNames", L.STANCE_ITEM_NAMES, { full = true })
 		H.Check(page, "stance.autoMacros", L.MACRO_AUTO, { full = true })
 		page:Note(L.MACRO_AUTO_NOTE)
+		page:Button({
+			text = L.MACRO_BAR_BUTTON,
+			tooltip = L.MACRO_BAR_TIP,
+			disabled = function()
+				return ns.Compat.InCombatLockdown()
+			end,
+			onClick = function()
+				local _, message = stance:PlaceMacrosOnBar()
+				ns:Print(message)
+			end,
+		})
+		page:Skip()
 		local function noWeapons()
 			return not ns.db.profile.stance.equipWeapons
 		end
@@ -147,14 +170,6 @@ ns.Config:RegisterPage({
 				end,
 				set = function(value)
 					stance:SetLoadout(key, "oh", value ~= 0 and value or nil)
-				end,
-			})
-			page:Button({
-				text = L.STANCE_MACRO_BUTTON,
-				tooltip = L.PICKER_MACRO_TIP:format(stance.MACRO_NAMES[key]),
-				onClick = function()
-					local _, message = stance:PickupMacro(key)
-					ns:Print(message)
 				end,
 			})
 			if canUseSets then

@@ -157,32 +157,115 @@ test("stance macro goes on the cursor and follows the weapons", function()
 	eq(#lines(Mock.macros[121].body), 3, "updated after combat")
 end)
 
-test("picker macro icon puts the stance macro on the cursor", function()
+test("the picker only shows weapons: no macro, binding or hint text", function()
 	WM.Boot()
 	rightClick(button(3))
 	local f = WarriorMasterWeaponPicker
-	f.macro.__scripts.OnDragStart(f.macro)
-	eq(Mock.macros[121].name, "WM Berserker", "macro created")
-	eq(Mock.cursor.index, 121, "picked up")
-	check(not picker():IsShown(), "picker closes so you can drop it")
+	check(f.macro == nil and f.macroText == nil and f.binding == nil and f.hint == nil, "no extra widgets")
+	local texts = 0
+	for _, child in ipairs(f.__children) do
+		if child.__kind == "FontString" and child:IsShown() and (child.__text or "") ~= "" then
+			texts = texts + 1
+		end
+	end
+	check(texts <= 4, "title and row labels only (" .. texts .. ")")
+	local _, h = f:GetSize()
+	check(h < 180, "compact window (" .. h .. ")")
 end)
 
-test("stances page has a put-on-action-bar button per stance", function()
+-- One click puts the three stance macros on an action bar ---------------------------------------
+local function showBar(name)
+	local f = CreateFrame("Frame", name, UIParent)
+	f:Show()
+	return f
+end
+
+local function slotName(slot)
+	local a = Mock.actions[slot]
+	return a and a.text
+end
+
+test("one button puts the three stance macros on a shown action bar", function()
 	WM.Boot()
+	showBar("MultiBarBottomLeft")
+	Mock.actions[61] = { kind = "spell", index = 78 } -- Heroic Strike already there
 	NS.Config:Show()
 	NS.Config:ShowPage("stance")
 	local page = NS.Config:GetPage("stance").instance
-	local count = 0
+	local count, button = 0, nil
 	for _, control in ipairs(page.controls) do
 		for _, child in ipairs(control.frame.__children or {}) do
-			if child.__kind == "FontString" and child.__text == NS.L.STANCE_MACRO_BUTTON then
+			if child.__kind == "FontString" and child.__text == NS.L.MACRO_BAR_BUTTON then
 				count = count + 1
-				if count == 1 then
-					control.frame.__scripts.OnClick(control.frame)
-				end
+				button = control.frame
 			end
 		end
 	end
-	eq(count, 3, "one per stance")
-	eq(Mock.macros[121].name, "WM Battle", "created from the page")
+	eq(count, 1, "a single button")
+	button.__scripts.OnClick(button)
+	eq(Mock.actions[61].kind, "spell", "existing action never replaced")
+	eq(slotName(62), "WM Battle", "battle")
+	eq(slotName(63), "WM Defensive", "defensive")
+	eq(slotName(64), "WM Berserker", "berserker, next to each other")
+	eq(Mock.cursor, nil, "cursor left empty")
+	contains(Mock.chat[#Mock.chat], "bottom left bar", "says where")
+	local ok, message = NS.modules.stance:PlaceMacrosOnBar()
+	check(ok, "second click is harmless")
+	eq(message, NS.L.MACRO_BAR_ALREADY, "already placed")
+	eq(slotName(65), nil, "no duplicates")
+end)
+
+test("only missing macros are placed, on the next bar with room", function()
+	WM.Boot()
+	showBar("MultiBarBottomLeft")
+	showBar("MultiBarBottomRight")
+	for slot = 61, 71 do
+		Mock.actions[slot] = { kind = "spell", index = slot }
+	end
+	Mock.FireEvent("UPDATE_MACROS")
+	local battle
+	for index, m in pairs(Mock.macros) do
+		if m.name == "WM Battle" then
+			battle = index
+		end
+	end
+	Mock.actions[72] = { kind = "macro", index = battle, text = "WM Battle" }
+	local ok = NS.modules.stance:PlaceMacrosOnBar()
+	check(ok, "placed")
+	eq(slotName(49), "WM Defensive", "bottom right bar used")
+	eq(slotName(50), "WM Berserker", "only the two missing ones")
+	eq(slotName(51), nil, "battle not placed twice")
+end)
+
+test("hidden bars are a last resort and full bars are reported", function()
+	WM.Boot()
+	local ok, message = NS.modules.stance:PlaceMacrosOnBar()
+	check(ok, "placed on a hidden bar")
+	eq(slotName(61), "WM Battle", "first bar")
+	contains(message, NS.L.MACRO_BAR_HIDDEN, "says the bar is hidden")
+	for slot = 1, 120 do
+		Mock.actions[slot] = Mock.actions[slot] or { kind = "spell", index = slot }
+	end
+	Mock.actions[61], Mock.actions[62], Mock.actions[63] = { kind = "spell", index = 1 }, { kind = "spell", index = 2 }, { kind = "spell", index = 3 }
+	ok, message = NS.modules.stance:PlaceMacrosOnBar()
+	check(not ok, "no room")
+	eq(message, NS.L.MACRO_BAR_FULL:format(3), "full message")
+end)
+
+test("placing on bars is refused in combat or with something on the cursor", function()
+	WM.Boot()
+	Mock.EnterCombat()
+	local ok, message = NS.modules.stance:PlaceMacrosOnBar()
+	check(not ok, "refused in combat")
+	eq(message, NS.L.MACRO_ERR_COMBAT, "combat message")
+	eq(#Mock.blocked, 0, "no protected call")
+	Mock.LeaveCombat()
+	Mock.cursor = { kind = "item", index = 1001 }
+	ok, message = NS.modules.stance:PlaceMacrosOnBar()
+	check(not ok, "refused with a busy cursor")
+	eq(message, NS.L.MACRO_BAR_CURSOR, "cursor message")
+	eq(Mock.cursor.kind, "item", "cursor untouched")
+	for slot = 1, 120 do
+		eq(Mock.actions[slot], nil, "nothing placed")
+	end
 end)

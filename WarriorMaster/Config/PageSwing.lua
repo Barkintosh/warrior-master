@@ -22,6 +22,11 @@ ns.Config:RegisterPage({
 		H.Check(page, "swing.enabled", L.ENABLE)
 		H.VisibilityDropdown(page, "swing")
 		H.StyleSection(page, "swing")
+		H.EnumDropdown(page, "swing.weaponFilter", L.SWING_WEAPON_FILTER, {
+			any = "SWING_FILTER_ANY",
+			twoHand = "SWING_FILTER_2H",
+			oneHand = "SWING_FILTER_1H",
+		})
 		H.Check(page, "swing.hideIdle", L.SWING_HIDE_IDLE, { full = true })
 
 		page:Header(L.SECTION_BEHAVIOR)

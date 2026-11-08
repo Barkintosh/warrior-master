@@ -76,7 +76,7 @@ end
 -- Shared value lists -----------------------------------------------------------------
 S.ANCHORS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 S.SHADES = { "None", "Gloss", "Shadow" }
-S.BORDERS = { "Forever", "ForeverFrame", "None", "Pixel", "Tooltip" }
+S.BORDERS = { "Forever", "ForeverFrame", "ForeverCast", "None", "Pixel", "Tooltip" }
 S.BUTTON_STYLES = { "Forever", "Pixel", "Clean" }
 S.OUTLINES = { "NONE", "OUTLINE", "THICKOUTLINE" }
 S.ALIGNS = { "LEFT", "CENTER", "RIGHT" }
@@ -87,7 +87,7 @@ for _, key in ipairs(Styles.ORDER) do
 	S.PRESET_KEYS[#S.PRESET_KEYS + 1] = key
 end
 S.PRESET_KEYS[#S.PRESET_KEYS + 1] = "Custom"
-S.STYLE_TARGETS = { "all", "health", "rage", "swing", "stance" }
+S.STYLE_TARGETS = { "all", "health", "rage", "swing", "cast", "stance" }
 S.STANCE_KEYS = { "battle", "defensive", "berserker" }
 S.LANGUAGES = { "auto", "enUS", "frFR" }
 
@@ -216,6 +216,21 @@ S.profile = {
 		offsetX = N(0, -2000, 2000, 1),
 		offsetY = N(0, -2000, 2000, 1),
 		clampAll = B(true),
+		-- Automatic vertical layout of every module (Widgets/Layout.lua).
+		layout = {
+			enabled = B(false),
+			gap = N(4, 0, 60, 1),
+			align = E("CENTER", S.ALIGNS),
+			order = X({ "health", "rage", "swing", "cast", "stance" }, function(value)
+				return ns.Layout.SanitizeOrder(value)
+			end),
+		},
+		-- Warrior fun in the settings window (Config/Flair.lua).
+		flair = {
+			enabled = B(true),
+			chance = N(15, 0, 100, 5),
+			closeShout = B(true),
+		},
 	},
 
 	health = merge(barVisual("health", { x = 0, y = -180 }), merge(resourceColors("health"), {
@@ -261,6 +276,7 @@ S.profile = {
 		showMainHand = B(true),
 		showOffHand = B(true),
 		showRanged = B(false),
+		weaponFilter = E("any", { "any", "twoHand", "oneHand" }),
 		spacing = styled("swing", "spacing", N, 0, 30, 1),
 		textMode = E("remaining", { "none", "remaining", "both" }),
 		labels = B(true),
@@ -273,6 +289,18 @@ S.profile = {
 		colorMainHand = styled("swing", "colorMainHand", C),
 		colorOffHand = styled("swing", "colorOffHand", C),
 		colorRanged = styled("swing", "colorRanged", C),
+	}),
+
+	cast = merge(barVisual("cast", { x = 0, y = -325 }), {
+		enabled = B(true),
+		showIcon = B(true),
+		showName = B(true),
+		textMode = E("remaining", { "none", "remaining", "both" }),
+		fadeOut = B(true),
+		colorCast = styled("cast", "colorCast", C),
+		colorChannel = styled("cast", "colorChannel", C),
+		colorSuccess = styled("cast", "colorSuccess", C),
+		colorFailed = styled("cast", "colorFailed", C),
 	}),
 
 	stance = {

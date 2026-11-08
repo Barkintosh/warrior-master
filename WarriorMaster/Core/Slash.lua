@@ -49,6 +49,15 @@ function ns:PrintDiagnostics()
 			yesNo(swing.enabled), st.events, st.secret, st.invalid, st.rescaled,
 			st.lastDuration and format("%.2f", st.lastDuration) or "-", yesNo(cvar)))
 	end
+	local cast = self:GetModule("cast")
+	if cast then
+		local st = cast.stats
+		self:Print(format("Cast bar: enabled %s | casts %d | channels %d | hidden timing %d | failed %d",
+			yesNo(cast.enabled), st.casts, st.channels, st.secret, st.failed))
+	end
+	if self.Layout:IsEnabled() then
+		self:Print("Layout: " .. table.concat(self.Layout.lastPlaced or {}, " > "))
+	end
 	local stance = self:GetModule("stance")
 	if stance then
 		self:Print(format("Stances: enabled %s | forms %d | active %s | pending %s",
@@ -74,7 +83,7 @@ end
 --- Resets the position of every frame (useful if one ends up off screen).
 function ns:ResetPositions()
 	local S = self.Schema
-	for _, key in ipairs({ "health", "rage", "swing", "stance" }) do
+	for _, key in ipairs({ "health", "rage", "swing", "cast", "stance" }) do
 		self.DB:Set(key .. ".point", S.profile[key].point.default)
 	end
 end
@@ -94,6 +103,7 @@ local MODULE_ALIASES = {
 	health = "health", hp = "health", vie = "health",
 	rage = "rage",
 	swing = "swing", attaque = "swing",
+	cast = "cast", castbar = "cast", incantation = "cast", sort = "cast",
 	stance = "stance", stances = "stance", posture = "stance", postures = "stance",
 }
 

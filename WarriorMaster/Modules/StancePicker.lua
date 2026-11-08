@@ -10,8 +10,7 @@ The picker is plain, non-secure UI: it only changes saved choices. The
 stance button itself is reconfigured by the stance module, out of combat
 (a change made in combat applies when combat ends).
 
-It also offers the stance as a character macro that can be dragged onto an
-action bar, and shows the stance button's key binding.
+It only switches weapons: nothing else is shown.
 ]]
 local _, ns = ...
 
@@ -85,7 +84,6 @@ function Picker:Create()
 	if self.frame then
 		return self.frame
 	end
-	local L = ns.L
 	local catcher = CreateFrame("Button", nil, UIParent)
 	catcher:SetAllPoints(UIParent)
 	catcher:SetFrameStrata("DIALOG")
@@ -128,47 +126,6 @@ function Picker:Create()
 		oh = makeRow(f, "STANCE_OFFHAND"),
 		set = makeRow(f, "STANCE_SET"),
 	}
-
-	-- Stance macro: drag (or click) to put it on the cursor.
-	local macro = CreateFrame("Button", nil, f, "BackdropTemplate")
-	macro:SetSize(ICON + 4, ICON + 4)
-	macro:SetBackdrop({ edgeFile = Media.WHITE, edgeSize = 1 })
-	macro:SetBackdropBorderColor(color("accent"))
-	macro.icon = macro:CreateTexture(nil, "ARTWORK")
-	macro.icon:SetPoint("TOPLEFT", 2, -2)
-	macro.icon:SetPoint("BOTTOMRIGHT", -2, 2)
-	macro:RegisterForDrag("LeftButton")
-	local function pickup()
-		local stance = ns:GetModule("stance")
-		local ok, message = stance:PickupMacro(Picker.key)
-		ns:Print(message)
-		if ok then
-			Picker:Hide()
-		end
-	end
-	macro:SetScript("OnDragStart", pickup)
-	macro:SetScript("OnClick", pickup)
-	macro:SetScript("OnEnter", function(self)
-		if GameTooltip then
-			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			GameTooltip:SetText(L.PICKER_MACRO)
-			GameTooltip:AddLine(L.PICKER_MACRO_TIP:format(ns:GetModule("stance").MACRO_NAMES[Picker.key] or ""), 1, 1, 1, true)
-			GameTooltip:Show()
-		end
-	end)
-	macro:SetScript("OnLeave", function()
-		if GameTooltip then
-			GameTooltip:Hide()
-		end
-	end)
-	f.macro = macro
-	f.macroText = ns.Theme.Text(f, ns.Theme.SIZE_SMALL, "text")
-	f.macroText:SetText(L.PICKER_MACRO)
-	f.binding = ns.Theme.Text(f, ns.Theme.SIZE_SMALL, "dim")
-	f.binding:SetWordWrap(true)
-	f.hint = ns.Theme.Text(f, ns.Theme.SIZE_SMALL, "dim")
-	f.hint:SetWordWrap(true)
-	f.hint:SetText(L.PICKER_HINT)
 
 	-- Escape closes the picker through its own keyboard script (see
 	-- UI.EscapeToClose); Blizzard's Escape handler list is never touched.
@@ -321,21 +278,7 @@ function Picker:Refresh()
 	end
 
 	local width = PAD * 2 + PER_ROW * (ICON + GAP) - GAP
-	f.macro:ClearAllPoints()
-	f.macro:SetPoint("TOPLEFT", f, "TOPLEFT", PAD, y - 2)
-	f.macro.icon:SetTexture(self.form.icon)
-	f.macroText:ClearAllPoints()
-	f.macroText:SetPoint("TOPLEFT", f.macro, "TOPRIGHT", 8, -2)
-	f.binding:ClearAllPoints()
-	f.binding:SetPoint("TOPLEFT", f.macroText, "BOTTOMLEFT", 0, -3)
-	f.binding:SetWidth(width - PAD * 2 - ICON - 12)
-	local binding = stance:GetBindingText(self.form.index)
-	f.binding:SetText(binding and L.STANCE_TIP_BINDING:format(binding) or L.PICKER_NO_BINDING)
-	y = y - ICON - 14
-	f.hint:ClearAllPoints()
-	f.hint:SetPoint("TOPLEFT", f, "TOPLEFT", PAD, y)
-	f.hint:SetWidth(width - PAD * 2)
-	y = y - math.ceil(f.hint:GetStringHeight()) - PAD
+	y = y + 6 - PAD
 	f:SetSize(width, -y)
 end
 

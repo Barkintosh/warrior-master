@@ -1,0 +1,60 @@
+## Interface: 16001
+## Title: Warrior Master
+## Notes: All-in-one Warrior toolkit: rage and health bars, swing timer, stance and weapon manager, macro builder.
+## Notes-frFR: Boîte à outils tout-en-un pour Guerrier : barres de rage et de vie, minuteur d'attaque, postures et armes, générateur de macros.
+## Author: buzk
+## Version: 1.0.0
+## SavedVariables: WarriorMasterDB
+## SavedVariablesPerCharacter: WarriorMasterCharDB
+## IconTexture: Interface\Icons\Ability_Warrior_BattleShout
+## X-Target-Client: World of Warcraft Forever 1.60.1 (interface 16001)
+
+# Core: namespace and localization
+Core\Init.lua
+Locales\enUS.lua
+Locales\frFR.lua
+Locales\Apply.lua
+
+# Core services
+Core\Util.lua
+Core\Compat.lua
+Core\Events.lua
+Core\Combat.lua
+Core\Security.lua
+Core\Media.lua
+Core\Styles.lua
+Core\Schema.lua
+Core\Presets.lua
+Core\Serializer.lua
+Core\Database.lua
+
+# Shared widgets
+Widgets\Bar.lua
+Widgets\Mover.lua
+
+# Feature modules
+Modules\ResourceBar.lua
+Modules\Rage.lua
+Modules\Health.lua
+Modules\Swing.lua
+Modules\Stance.lua
+Modules\StancePicker.lua
+Modules\MacroTemplates.lua
+Modules\MacroBuilder.lua
+Modules\TestMode.lua
+
+# Configuration interface
+Config\Theme.lua
+Config\Controls.lua
+Config\Panel.lua
+Config\PageGeneral.lua
+Config\PageBars.lua
+Config\PageSwing.lua
+Config\PageStance.lua
+Config\PageMacros.lua
+Config\PageProfiles.lua
+Config\PageAbout.lua
+
+# Entry points
+Core\Slash.lua
+Core\Boot.lua

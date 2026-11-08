@@ -1,0 +1,107 @@
+# Security and compliance - Warrior Master
+
+Warrior Master is built to respect Blizzard's addon rules and the client's protected-action system. This document records every decision that touches account safety, so it can be audited.
+
+> No addon can guarantee zero account risk. Warrior Master reduces risk by using documented APIs only, never automating gameplay, and turning a feature off when its behaviour cannot be confirmed. It does not claim to be "ban-proof".
+
+## 1. Principles
+
+1. **No automation.** The addon never plays for you. It does not cast spells, change stance, equip items, target, attack or run macros by itself, whether on a timer, on an event or on any other condition.
+2. **Every game action needs your hardware input.** The only things that act in game are the stance buttons, which are secure buttons fired by your mouse click or key binding, and macros that you place and press yourself.
+3. **No protected-API bypass.** No hooks on Blizzard code, no restricted-environment snippets, no `:Click()` calls, no binding changes, no combat-lockdown tricks.
+4. **No combat log.** WoW Forever forbids it for addons, and the addon never registers it.
+5. **No hidden values are guessed.** When the client hides a value (a "secret value"), the addon displays it through the client's own widgets or turns the dependent feature off. It never infers or approximates.
+6. **Privacy.** No network traffic, telemetry or analytics. No downloaded or obfuscated code, and no external programs. The game client is never modified.
+
+## 2. Feature classification
+
+Status meanings:
+- **SAFE**: documented APIs only, no protected behaviour.
+- **RESTRICTED**: needs secure player input or is limited to out of combat.
+- **UNSUPPORTED**: cannot be done compliantly, so it is not implemented.
+- **UNVERIFIED**: implemented defensively but waiting for in-game confirmation. Risky items in this group are off by default.
+
+The same list appears in game on the **Safety & About** page and comes from `Core/Security.lua`.
+
+| Feature | Status | How it stays compliant |
+|---|---|---|
+| Rage bar | SAFE | Reads `UnitPower`/`UnitPowerMax`. Hidden values go straight to `StatusBar`/`FontString` setters that accept them. |
+| Health bar | SAFE | Same handling with `UnitHealth`/`UnitHealthMax`. |
+| Colors and glow while values are hidden | UNVERIFIED | Client curve objects (`C_CurveUtil`) evaluated by `UnitPowerPercent`/`UnitHealthPercent`. Falls back to a single color if the client rejects it. |
+| Sound alerts | RESTRICTED | Need a readable value. Paused automatically while values are hidden. Edge-triggered and throttled to one every 2 s. |
+| Swing timer (MH/OH/ranged) | UNVERIFIED | Uses only the client event `PLAYER_SWING`. Hidden or invalid durations are ignored and never guessed. |
+| Out-of-reach dimming | UNVERIFIED | `C_SwingTimer.EnableRangeCheck`. Off by default. Only switched off again when the game's own swing bars are off, because the check is shared with them. |
+| Enemy swing timer | **UNSUPPORTED** | Would need the combat log, which is blocked. `UNIT_COMBAT` cannot tell which enemy swung, so a timer built on it would be misleading. Not implemented. |
+| Stance buttons | RESTRICTED | `SecureActionButtonTemplate`, type `spell`. They act only on your click or binding. Created, changed, moved and hidden only out of combat. |
+| Weapon picker (right-click) | SAFE | Plain UI. The right mouse button is given the secure type `none`, which is not an action, so a right-click never casts or equips anything. The picker only saves your choice. |
+| Stance macros for action bars | RESTRICTED | `CreateMacro`/`EditMacro`/`PickupMacro`, only when you click or drag, and only out of combat. Existing "WM ..." macros are re-synced with your weapons out of combat. Same text as the stance button's click action, validated, never run by the addon. |
+| Weapons with a stance | RESTRICTED | Same secure click with type `macro`: `/cast [nostance:N] Stance` followed by `/equipslot` or `/equipset` lines that you chose. |
+| Automatic weapon or stance swap on events | **UNSUPPORTED** | That would play the game for you. Forbidden by design. A stance change only updates the highlight. |
+| Macro builder: text, preview, copy | SAFE | Text generation and validation only. |
+| Macro builder: create in game | RESTRICTED | `CreateMacro`/`EditMacro`, only from your button click, only out of combat, only after validation. The addon never runs the macro. |
+| Profiles, import and export | SAFE | Plain-data format, read by a hand-written parser (never `loadstring`), then validated field by field. |
+| Client swing-timer option button | RESTRICTED | Sets the `showSwingTimer` option only when you click the button, and only out of combat. This is the only setting the addon ever changes. |
+
+## 3. Secure interaction rules, as implemented
+
+### 3.1 Combat lockdown
+- Every change to a secure frame goes through `ns.Combat:Run(key, fn)` in `Core/Combat.lua`. This covers creation, attributes, show/hide, size and position.
+- In combat the change is queued (the latest change per key wins) and applied on `PLAYER_REGEN_ENABLED`.
+- `Security.AssertOutOfCombat` is a second guard inside those functions. If it ever fires, the error is reported, not hidden.
+- If you `/reload` in combat, the secure buttons are created only after combat.
+- Dragging the stance bar is refused in combat. When combat starts, any drag in progress is stopped and every frame is locked. This happens on `PLAYER_REGEN_DISABLED`, before lockdown begins.
+- During combat only cosmetic regions change: the active-stance highlight, cooldown swipe, icons and tooltips. Hidden stance state is turned into an alpha value with `C_CurveUtil.EvaluateColorValueFromBoolean`.
+
+### 3.2 What a stance button can do
+The button holds one of two actions, both built only from your own choices:
+```
+type = "spell",  spell = "Defensive Stance"
+type = "macro",  macrotext = "/cast [nostance:2] Defensive Stance\n/equipslot 16 item:12345\n/equipslot 17 item:67890"
+```
+- Item and stance names pass through `Security.SanitizeMacroToken`. It removes line breaks, control characters, `|`, `[`, `]`, `;` and leading slashes, so a crafted item name cannot inject another line or condition. This is tested.
+- The text is checked against the forbidden command list and limited to 1,000 characters.
+- Disabling the module clears all actions (`type`, `spell` and `macrotext` set to nil) and hides the buttons. In combat this happens right after combat.
+- Key bindings (`Bindings.xml`) are standard `CLICK` bindings on these buttons: your key press is the hardware event.
+
+### 3.3 Macro policy
+Generated macros do one thing per key press and use only standard macro options: `[stance]`, `[nostance]`, `[equipped]`, `[noequipped]`, `[mod]`, `[combat]` and `[nocombat]`.
+
+The validator (`MacroBuilder.Validate`) and `Security.FORBIDDEN_COMMANDS` reject the following:
+- Script and console commands: `/run`, `/script`, `/console`, `/dump`, `/tinspect`, `/eventtrace`, `/fstack`, `/framestack`, `/api`.
+- Session commands: `/reload`, `/rl`, `/logout`, `/camp`, `/quit`, `/exit`.
+- Action chains: `/castsequence` and `/click`.
+
+Conditional stance macros (for example "Overpower in Battle Stance, otherwise switch to Battle Stance") are a standard Blizzard feature. They still need one key press per action and make no decision the player did not encode.
+
+### 3.4 Things the addon never does
+Each item below is enforced by the static audit (`tools/audit.py`), which also tests itself against known-bad samples:
+- Code execution or environment access: `loadstring`, `load`, `dofile`, `loadfile`, `getfenv`, `setfenv`, the `debug`, `io` and `os` libraries, `RunScript`, `RunMacro`, `RunMacroText`.
+- Protected actions: `CastSpellByName`, `CastSpellByID`, `CastShapeshiftForm`, `UseAction`, `UseInventoryItem`, `UseContainerItem`, `PickupInventoryItem`, `PickupContainerItem`, `EquipItemByName`, `EquipCursorItem`, `AutoEquipCursorItem`, `UseEquipmentSet`, `TargetUnit`, `AttackTarget`, `StartAttack`, `SpellStopCasting`, `SecureCmdUseItem`.
+- Programmatic clicks: `:Click()` on any frame.
+- Combat log: `CombatLogGetCurrentEventInfo`, or any `COMBAT_LOG_EVENT*` string.
+- Communication: `SendChatMessage`, `SendAddonMessage`, `C_ChatInfo`, `C_BattleNet`.
+- Bindings, hooks and secure drivers: `SetBinding*`, `SetOverrideBinding*`, `hooksecurefunc`, `RegisterStateDriver`, `SecureHandlerWrapScript`.
+- Game settings and Blizzard tables: `SetCVar` and modifications of `UISpecialFrames` or `StaticPopupDialogs`. Both have one documented, line-marked exception: the swing-option button, and the Escape fallback for clients without `RegisterGameMenuEscHandler`.
+
+## 4. Runtime safeguards
+- **API presence:** every version-sensitive API is looked up in `Core/Compat.lua` and wrapped in `pcall`. A missing API turns the dependent feature off.
+- **Hidden values:** `issecretvalue` is checked before any comparison or arithmetic (`Compat.ReadableNumber` and `ReadableBool`).
+- **Saved data:** profiles, character data and imports are rebuilt through `Core/Schema.lua`. That fixes wrong types, NaN or infinite numbers, out-of-range values, unknown enums, oversized strings and unknown keys.
+- **Import limits:** 64 KB of text, nesting depth 12, 4,000 items, strings of 1,024 bytes, a checksum, and no code evaluation.
+- **Errors:** event handlers run under `pcall`. Each error is recorded (`/warriormaster errors`) and forwarded once to the game's error handler, so it stays visible rather than being swallowed.
+- **Blocked actions:** if the client reports `ADDON_ACTION_BLOCKED` or `ADDON_ACTION_FORBIDDEN` for this addon, a chat warning is printed.
+- **Event volume:** each module has its own event frame. A disabled module unregisters everything and cannot act. Swing updates run only while a swing is in progress. Bursts of bag and item events are merged into one rebuild.
+- **Message loops:** internal messages stop at a depth of 8.
+- **Taint:** no Blizzard frame or function is hooked, modified or re-anchored. The settings window uses its own widgets, not `UIDropDownMenu`. Escape is handled through Blizzard's `securecallfunction`-based handler list.
+
+### 4.1 Optional SharedMedia
+If another addon has loaded LibSharedMedia-3.0, Warrior Master reads its list of status bar textures and fonts. It only looks up file names through `LibStub("LibSharedMedia-3.0", true)`, inside `pcall`. Nothing is registered, modified or executed, and the addon works the same without it.
+
+## 5. Privacy and integrity
+- No network communication, telemetry, analytics or personal data collection. The saved variables contain only settings, your profile names and the item IDs you picked.
+- No external executables, DLLs, memory access or client modification.
+- The source is plain, commented Lua with no obfuscation, minification or bundled libraries.
+- During development the game was never launched or controlled, and no debugger was attached. All validation is offline (see TESTING.md).
+
+## 6. Reporting a problem
+Run `/warriormaster diag` and `/warriormaster errors` in game and share the output. If the game ever shows "Interface action failed because of an AddOn" or a blocked-action warning naming Warrior Master, disable the module concerned and report it. It will be treated as a bug to fix, never worked around.

@@ -1,0 +1,11 @@
+<!--
+Warrior Master key bindings.
+Each binding clicks one of the addon's secure stance buttons with the
+player's own key press (a hardware event), exactly like a mouse click.
+Labels are set in Core/Boot.lua (BINDING_HEADER_* / BINDING_NAME_*).
+-->
+<Bindings>
+	<Binding name="CLICK WarriorMasterStanceButton1:LeftButton" header="WARRIORMASTER" category="ADDONS"/>
+	<Binding name="CLICK WarriorMasterStanceButton2:LeftButton" category="ADDONS"/>
+	<Binding name="CLICK WarriorMasterStanceButton3:LeftButton" category="ADDONS"/>
+</Bindings>

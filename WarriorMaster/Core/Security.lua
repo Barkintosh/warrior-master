@@ -35,6 +35,7 @@ Security.features = {
 	{ key = "FEAT_WEAPONS", status = "RESTRICTED" },
 	{ key = "FEAT_PICKER", status = "SAFE" },
 	{ key = "FEAT_STANCE_MACROS", status = "RESTRICTED" },
+	{ key = "FEAT_MINIMAP", status = "SAFE" },
 	{ key = "FEAT_AUTO_SWAP", status = "UNSUPPORTED" },
 	{ key = "FEAT_MACRO_TEXT", status = "SAFE" },
 	{ key = "FEAT_MACRO_CREATE", status = "RESTRICTED" },

@@ -521,6 +521,10 @@ GameTooltip = newObject("GameTooltip", "GameTooltip", UIParent)
 GameFontNormal = newObject("Font", "GameFontNormal", nil)
 GameFontHighlight = newObject("Font", "GameFontHighlight", nil)
 GameFontHighlightSmall = newObject("Font", "GameFontHighlightSmall", nil)
+Minimap = newObject("Frame", "Minimap", UIParent)
+Minimap.__width, Minimap.__height = 140, 140
+Mock.cursorPos = { 600, 400 }
+function GetCursorPosition() return Mock.cursorPos[1], Mock.cursorPos[2] end
 DEFAULT_CHAT_FRAME = newObject("Frame", "ChatFrame1", UIParent)
 function DEFAULT_CHAT_FRAME:AddMessage(text)
 	Mock.chat[#Mock.chat + 1] = text
@@ -927,7 +931,7 @@ end
 C_AddOns = {}
 function C_AddOns.GetAddOnMetadata(addon, field)
 	if field == "Version" then
-		return "1.0.1"
+		return "1.1.0"
 	end
 end
 function geterrorhandler()

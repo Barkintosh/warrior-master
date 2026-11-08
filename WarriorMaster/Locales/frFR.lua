@@ -6,7 +6,7 @@ local _, ns = ...
 
 ns.Locales.frFR = {
 	-- Messages généraux
-	LOADED = "chargé. Tapez /warriormaster pour ouvrir les réglages.",
+	LOADED = "chargé. Tapez /warrior pour ouvrir les réglages.",
 	WARRIOR_ONLY = "Warrior Master n'est actif que sur les personnages Guerrier.",
 	COMBAT_QUEUED = "Enregistré. Ce changement s'appliquera à la fin du combat.",
 	COMBAT_BLOCKED = "Indisponible en combat.",
@@ -20,8 +20,8 @@ ns.Locales.frFR = {
 	TEST_ON = "Mode aperçu activé.",
 	TEST_OFF = "Mode aperçu désactivé.",
 	TEST_COMBAT_OFF = "Mode aperçu désactivé car vous êtes entré en combat.",
-	SLASH_HELP = "Commandes : /warriormaster (réglages ; alias court /uw), puis lock, unlock, test, preset <style> [module], profile <nom>, diag, errors, reset (positions des cadres). Exemple : /warriormaster preset frost rage",
-	UNKNOWN_COMMAND = "Commande inconnue. Tapez /warriormaster help.",
+	SLASH_HELP = "Commandes : /warrior (réglages ; aussi /warriormaster et /uw), puis lock, unlock, test, preset <style> [module], profile <nom>, diag, errors, reset (positions des cadres). Exemple : /warrior preset frost rage",
+	UNKNOWN_COMMAND = "Commande inconnue. Tapez /warrior help.",
 	CONFIRM_CLICK = "Cliquez à nouveau pour confirmer",
 	OPEN_SETTINGS = "Ouvrir les réglages de Warrior Master",
 	STATE_ON = "activé",
@@ -243,6 +243,15 @@ ns.Locales.frFR = {
 	FONTSTYLE_BRUSH = "Pinceau",
 	FONTSTYLE_HEAVY = "Épais",
 	FONTSTYLE_LARGE = "Grand",
+
+	-- Minimap button and automatic stance macros
+	MINIMAP_LEFT = "Clic gauche : ouvrir les réglages",
+	MINIMAP_RIGHT = "Clic droit : verrouiller ou déverrouiller les cadres",
+	MINIMAP_DRAG = "Glisser : déplacer autour de la minicarte",
+	MINIMAP_SHOW = "Afficher le bouton de la minicarte",
+	MACRO_AUTO = "Créer et mettre à jour les macros de posture",
+	MACRO_AUTO_NOTE = "Warrior Master tient une macro de personnage par posture connue : WM Battle, WM Defensive et WM Berserker. Chacune fait exactement comme son bouton de posture (posture et armes). Placez-les où vous voulez sur vos barres d'action ; elles suivent vos choix d'armes. Elles sont créées et mises à jour hors combat uniquement, et jamais exécutées par l'addon.",
+	MACRO_AUTO_FULL = "Plus d'emplacement de macro de personnage libre : les macros de posture n'ont pas pu être créées.",
 
 	-- Minuteur d'attaque
 	SWING_MH = "Main droite",
@@ -490,7 +499,9 @@ ns.Locales.frFR = {
 	FEAT_PICKER = "Choix des armes (clic droit sur un bouton de posture)",
 	FEAT_PICKER_NOTE = "Simple interface : le clic droit n'a aucune action sécurisée, il enregistre seulement votre choix.",
 	FEAT_STANCE_MACROS = "Macros de posture pour les barres d'action",
-	FEAT_STANCE_MACROS_NOTE = "Créées et placées sur votre curseur uniquement à votre clic ; tenues à jour avec vos armes hors combat. Jamais exécutées par l'addon.",
+	FEAT_STANCE_MACROS_NOTE = "Créées et tenues à jour avec vos armes automatiquement (désactivable), hors combat uniquement et une fois vos macros chargées. Jamais exécutées par l'addon.",
+	FEAT_MINIMAP = "Bouton de minicarte et entrée du menu AddOns",
+	FEAT_MINIMAP_NOTE = "Simple interface qui ouvre seulement les réglages.",
 	FEAT_AUTO_SWAP = "Changement automatique d'arme ou de posture",
 	FEAT_AUTO_SWAP_NOTE = "Reviendrait à jouer à votre place. Interdit par conception.",
 	FEAT_MACRO_TEXT = "Générateur de macros (texte, aperçu, copie)",

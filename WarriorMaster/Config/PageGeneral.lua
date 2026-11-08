@@ -157,6 +157,15 @@ ns.Config:RegisterPage({
 		end
 
 		page:Header(L.SECTION_INTERFACE)
+		page:Checkbox({
+			label = L.MINIMAP_SHOW,
+			get = function()
+				return ns.db.global.minimap.show
+			end,
+			set = function(value)
+				ns.DB:SetGlobal("minimap.show", value)
+			end,
+		})
 		page:Dropdown({
 			label = L.LANGUAGE,
 			options = function()

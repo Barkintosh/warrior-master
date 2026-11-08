@@ -89,9 +89,10 @@ The default style reproduces Blizzard's own Forever UI. These atlases and fonts 
 `StatusBar:SetStatusBarTexture` accepts an atlas name, as Blizzard's own code does. `Texture:SetAtlas`, `CreateMaskTexture`, `AddMaskTexture`/`RemoveMaskTexture` and `SetShadowOffset`/`SetShadowColor` are documented for 1.60.1. Each atlas call is wrapped so that a missing atlas falls back to a plain texture.
 
 ### 3.6 Slash commands, macros and tooltips
-- **`/wm` is taken:** it is Blizzard's `WORLD_MARKER` secure command (`SlashCommands.lua`). `SlashCommandsRegistry.lua` states that the secure command registry "is always consulted first when a command is executed", so an addon cannot own `/wm`. Warrior Master uses `/warriormaster`, with `/uw` as a short alias.
+- **`/wm` is taken:** it is Blizzard's `WORLD_MARKER` secure command (`SlashCommands.lua`). `SlashCommandsRegistry.lua` states that the secure command registry "is always consulted first when a command is executed", so an addon cannot own `/wm`. Warrior Master uses `/warrior`, with `/warriormaster` and `/uw` as aliases.
 - **Right-click on a secure button:** `SecureTemplates.lua` looks up `type2` for the right button. An unknown type such as `none` finds no handler, so nothing is done. `PostClick` then runs the addon's picker.
-- **Stance macros:** `PickupMacro` is used by `Blizzard_MacroUI` (verified legacy global).
+- **Stance macros:** `PickupMacro` is used by `Blizzard_MacroUI` (verified legacy global). `UPDATE_MACROS` (documented) marks the moment the player's macros are loaded; nothing is created before it.
+- **Minimap button and compartment:** a plain button parented to `Minimap`. It uses the textures `Interface\Minimap\MiniMap-TrackingBorder`, `UI-Minimap-Background` and `UI-Minimap-ZoomButton-Highlight`, which Forever addons already use. The addon compartment is fed through the TOC fields `AddonCompartmentFunc*`, as ForeverDungeonJournal, OpenMap and Baganator do on Forever.
 - **Item tooltips:** `GameTooltip:SetBagItem` and `SetInventoryItem` are used by Forever's own `Camelot/EquipmentFlyout.lua`.
 - **Fonts:** every font file offered is referenced by `Blizzard_Fonts_Shared` of 1.60.1. That covers the Western Friz Quadrata, Arial Narrow, Morpheus and Skurri, and the Asian 2002, K_Damage, K_Pagetext, ARKai_T, bHEI01B and ARHei.
 

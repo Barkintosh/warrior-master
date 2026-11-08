@@ -31,7 +31,8 @@ cp -r WarriorMaster "/c/Program Files (x86)/World of Warcraft/_forever_/Interfac
 The addon only activates on Warrior characters.
 
 ## Getting started
-- Type **`/warriormaster`** to open the settings. The short alias `/uw` works too.
+- Type **`/warrior`** to open the settings (`/warriormaster` and `/uw` work too), or click the **minimap button**. Warrior Master is also in the game's AddOns menu next to the minimap.
+- **Minimap button:** left-click opens the settings, right-click locks or unlocks the frames, and you can drag it around the minimap. It can be hidden on the General page.
 - Click **Unlock frames** in the window footer and drag the bars where you want them. Right-click a frame to reset its position.
 - Turn on **Preview mode** to see every bar with simulated values while you style them. It turns itself off when combat starts.
 - Pick a **style** on the General page (or at the top of a module's page), then fine-tune anything you like.
@@ -39,15 +40,15 @@ The addon only activates on Warrior characters.
 ### Slash commands
 | Command | Effect |
 |---|---|
-| `/warriormaster` | Open or close the settings |
-| `/warriormaster lock`, `/warriormaster unlock` | Lock or unlock frame dragging |
-| `/warriormaster test` | Toggle preview mode |
-| `/warriormaster preset <style> [module]` | Apply a style to every module, or to one (`health`, `rage`, `swing`, `stance`). Example: `/warriormaster preset frost rage` |
-| `/warriormaster profile <name>` | Switch profile |
-| `/warriormaster reset` | Reset all frame positions |
-| `/warriormaster diag` | Print diagnostics (client build, hidden values, swing events, queued changes) |
-| `/warriormaster errors` | List errors caught this session |
-| `/warriormaster help` | List commands |
+| `/warrior` | Open or close the settings |
+| `/warrior lock`, `/warrior unlock` | Lock or unlock frame dragging |
+| `/warrior test` | Toggle preview mode |
+| `/warrior preset <style> [module]` | Apply a style to every module, or to one (`health`, `rage`, `swing`, `stance`). Example: `/warrior preset frost rage` |
+| `/warrior profile <name>` | Switch profile |
+| `/warrior reset` | Reset all frame positions |
+| `/warrior diag` | Print diagnostics (client build, hidden values, swing events, queued changes) |
+| `/warrior errors` | List errors caught this session |
+| `/warrior help` | List commands |
 
 (`/wm` cannot be used: on WoW Forever it is the game's own world-marker command, and the game always runs its built-in commands before an addon's.)
 
@@ -56,7 +57,12 @@ The addon only activates on Warrior characters.
 2. **Click the icons** you want for that stance. A two-hander greys out the off hand; choosing an equipment set replaces single weapons.
 3. **Left-click** the stance button (or press its key) to switch stance and equip those weapons in one go.
 
-**On your action bars:** in the same window, drag the stance icon onto any action bar slot. This creates the character macro "WM Battle", "WM Defensive" or "WM Berserker", which does exactly what the stance button does. It updates itself when you change the weapons, and you can bind a key to that slot like any other action. The Stances page has the same **Put on action bar** button.
+**Stance macros:** Warrior Master creates its own character macros for the stances you know: **WM Battle**, **WM Defensive** and **WM Berserker**. Each one does exactly what its stance button does, stance and weapons. Put them wherever you like on your action bars (find them in `/macro`, Character tab) and bind keys to those slots.
+- **Always up to date:** whenever you change a stance's weapons, its macro is updated.
+- **Out of combat:** they are created and updated outside combat only.
+- **Deleting one:** a macro you delete stays deleted until you change that stance's setup again.
+- **Turning them off:** there's a switch on the Stances page.
+- **Quick placement:** the picker's stance icon and the Stances page's **Put on action bar** button put a macro on your cursor so you can drop it on a slot.
 
 ### Key bindings
 *Options > Keybindings > AddOns > Warrior Master* lists **Stance button 1-3**. They press the stance buttons exactly like a click.

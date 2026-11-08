@@ -104,6 +104,8 @@ ns.Config:RegisterPage({
 		page:Note(L.STANCE_RIGHTCLICK_HINT, "info")
 		H.Check(page, "stance.equipWeapons", L.STANCE_EQUIP, { full = true })
 		H.Check(page, "stance.useItemNames", L.STANCE_ITEM_NAMES, { full = true })
+		H.Check(page, "stance.autoMacros", L.MACRO_AUTO, { full = true })
+		page:Note(L.MACRO_AUTO_NOTE)
 		local function noWeapons()
 			return not ns.db.profile.stance.equipWeapons
 		end

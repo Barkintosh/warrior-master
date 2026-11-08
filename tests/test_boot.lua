@@ -30,7 +30,10 @@ test("creates only the expected globals", function()
 	WM.Boot()
 	local allowed = {
 		WarriorMasterDB = true, WarriorMasterCharDB = true,
-		SLASH_WARRIORMASTER1 = true, SLASH_WARRIORMASTER2 = true,
+		SLASH_WARRIORMASTER1 = true, SLASH_WARRIORMASTER2 = true, SLASH_WARRIORMASTER3 = true,
+		WarriorMaster_OnAddonCompartmentClick = true,
+		WarriorMaster_OnAddonCompartmentEnter = true,
+		WarriorMaster_OnAddonCompartmentLeave = true,
 		BINDING_HEADER_WARRIORMASTER = true,
 		["BINDING_NAME_CLICK WarriorMasterStanceButton1:LeftButton"] = true,
 		["BINDING_NAME_CLICK WarriorMasterStanceButton2:LeftButton"] = true,

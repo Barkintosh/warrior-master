@@ -63,6 +63,13 @@ function Stance:OnEnable()
 	self:RegisterEvent("UPDATE_SHAPESHIFT_USABLE", "UpdateState")
 	self:RegisterEvent("UPDATE_SHAPESHIFT_COOLDOWN", "UpdateState")
 	self:RegisterEvent("UPDATE_BINDINGS", "UpdateBindings")
+	self:RegisterEvent("UPDATE_MACROS")
+	-- Fallback if the game loaded the macros before this module was enabled.
+	C_Timer.After(5, function()
+		if self.enabled and not self.macrosReady then
+			self:UPDATE_MACROS()
+		end
+	end)
 	self:RequestConfigure()
 end
 
@@ -561,6 +568,7 @@ function Stance:PickupMacro(key)
 	end
 	self.syncedText = self.syncedText or {}
 	self.syncedText[key] = text
+	self.macrosReady = true
 	local index = MB.FindMacro(name, true)
 	if index and type(PickupMacro) == "function" then
 		pcall(PickupMacro, index)
@@ -569,26 +577,59 @@ function Stance:PickupMacro(key)
 	return true, message
 end
 
---- Keeps existing stance macros in line with the chosen weapons.
-function Stance:SyncMacros()
-	if Compat.InCombatLockdown() or type(EditMacro) ~= "function" then
+--- Creates the stance macros and keeps them in line with the chosen weapons.
+-- Runs out of combat only, and only once the game has loaded the player's
+-- macros (UPDATE_MACROS), so it can never create duplicates at login.
+--   create: also create missing macros (at login, when the setup changes,
+--           or on request). Other macro updates only refresh existing ones,
+--           so a macro the player deleted is not recreated behind their back.
+function Stance:SyncMacros(create)
+	if Compat.InCombatLockdown() or type(EditMacro) ~= "function" or type(CreateMacro) ~= "function" then
 		return
 	end
+	if not self.macrosReady then
+		return
+	end
+	local cfg = self:GetConfig()
 	local MB = ns.MacroBuilder
 	self.syncedText = self.syncedText or {}
-	for _, key in ipairs(ORDER) do
+	for _, form in ipairs(self:ReadForms()) do
+		local key = form.key
+		local name = self.MACRO_NAMES[key]
 		local text = self:StanceMacroText(key)
-		if self.syncedText[key] ~= text then
-			local name = self.MACRO_NAMES[key]
-			local index = MB.FindMacro(name, true)
-			if index then
-				local _, _, body = GetMacroInfo(index)
-				if body ~= text and MB.Validate(text).ok then
-					pcall(EditMacro, index, name, Compat.GetSpellIcon(DEFAULT_IDS[key]), text)
-				end
-				self.syncedText[key] = text
+		local known = self.syncedText[key]
+		local changed = known ~= nil and known ~= text
+		local index = MB.FindMacro(name, true)
+		if index and known ~= text then
+			local _, _, body = GetMacroInfo(index)
+			if body ~= text and MB.Validate(text).ok then
+				pcall(EditMacro, index, name, Compat.GetSpellIcon(form.spellID), text)
 			end
+			self.syncedText[key] = text
+		elseif not index and cfg.autoMacros and (create or changed) and MB.Validate(text).ok then
+			local _, numCharacter = GetNumMacros()
+			local _, maxCharacter = MB.GetLimits()
+			if (Compat.ReadableNumber(numCharacter) or 0) < maxCharacter then
+				pcall(CreateMacro, name, Compat.GetSpellIcon(form.spellID) or MB.ICON_DEFAULT, text, true)
+				self.syncedText[key] = text
+			elseif not self.macroFullNotice then
+				self.macroFullNotice = true
+				ns:Print(ns.L.MACRO_AUTO_FULL)
+			end
+		else
+			self.syncedText[key] = text
 		end
+	end
+end
+
+function Stance:UPDATE_MACROS()
+	local first = not self.macrosReady
+	self.macrosReady = true
+	if first then
+		-- First load of the player's macros this session: create missing ones.
+		ns.Combat:Run("stance:macros", function()
+			self:SyncMacros(true)
+		end)
 	end
 end
 
@@ -683,7 +724,7 @@ function Stance:Configure()
 	self:UpdateLoadoutVisuals()
 	self:UpdateState()
 	self:UpdateBindings()
-	self:SyncMacros()
+	self:SyncMacros(false)
 	ns.Movers:Refresh()
 	ns:SendMessage("STANCE_CONFIGURED")
 end
@@ -812,6 +853,11 @@ end
 ns:RegisterMessage(Stance, "SETTINGS_CHANGED", function(self, _, path)
 	if self.enabled and (path == "stance" or path:sub(1, 7) == "stance.") then
 		self:RequestConfigure("user")
+		if path == "stance.autoMacros" and self:GetConfig().autoMacros then
+			ns.Combat:Run("stance:macros", function()
+				self:SyncMacros(true)
+			end)
+		end
 	end
 end)
 ns:RegisterMessage(Stance, "CHAR_SETTINGS_CHANGED", function(self, _, path)

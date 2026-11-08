@@ -117,6 +117,7 @@ function boot:PLAYER_LOGIN()
 			end
 		end
 		ns.Movers:SetShown(not ns.db.profile.general.locked)
+		ns:SafeCall(ns.MinimapButton.Init, ns.MinimapButton)
 	end
 	ns.state.ready = true
 end

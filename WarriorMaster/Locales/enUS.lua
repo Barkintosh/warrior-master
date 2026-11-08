@@ -7,7 +7,7 @@ local _, ns = ...
 
 ns.Locales.enUS = {
 	-- General messages
-	LOADED = "loaded. Type /warriormaster to open the settings.",
+	LOADED = "loaded. Type /warrior to open the settings.",
 	WARRIOR_ONLY = "Warrior Master is only active on Warrior characters.",
 	COMBAT_QUEUED = "Saved. This change will apply when you leave combat.",
 	COMBAT_BLOCKED = "Not available in combat.",
@@ -21,8 +21,8 @@ ns.Locales.enUS = {
 	TEST_ON = "Preview mode on.",
 	TEST_OFF = "Preview mode off.",
 	TEST_COMBAT_OFF = "Preview mode turned off because you entered combat.",
-	SLASH_HELP = "Commands: /warriormaster (settings; short alias /uw), then lock, unlock, test, preset <style> [module], profile <name>, diag, errors, reset (frame positions). Example: /warriormaster preset frost rage",
-	UNKNOWN_COMMAND = "Unknown command. Type /warriormaster help.",
+	SLASH_HELP = "Commands: /warrior (settings; also /warriormaster and /uw), then lock, unlock, test, preset <style> [module], profile <name>, diag, errors, reset (frame positions). Example: /warrior preset frost rage",
+	UNKNOWN_COMMAND = "Unknown command. Type /warrior help.",
 	CONFIRM_CLICK = "Click again to confirm",
 	OPEN_SETTINGS = "Open Warrior Master settings",
 	STATE_ON = "on",
@@ -244,6 +244,15 @@ ns.Locales.enUS = {
 	FONTSTYLE_BRUSH = "Brush",
 	FONTSTYLE_HEAVY = "Heavy",
 	FONTSTYLE_LARGE = "Large",
+
+	-- Minimap button and automatic stance macros
+	MINIMAP_LEFT = "Left-click: open the settings",
+	MINIMAP_RIGHT = "Right-click: lock or unlock the frames",
+	MINIMAP_DRAG = "Drag: move around the minimap",
+	MINIMAP_SHOW = "Show the minimap button",
+	MACRO_AUTO = "Create and update the stance macros",
+	MACRO_AUTO_NOTE = "Warrior Master keeps one character macro per known stance: WM Battle, WM Defensive and WM Berserker. Each one does exactly what its stance button does (stance and weapons). Place them anywhere on your action bars; they follow your weapon choices. They are created and updated out of combat only, and never run by the addon.",
+	MACRO_AUTO_FULL = "No free character macro slot: the stance macros could not be created.",
 
 	-- Swing timer
 	SWING_MH = "Main hand",
@@ -491,7 +500,9 @@ ns.Locales.enUS = {
 	FEAT_PICKER = "Weapon picker (right-click a stance button)",
 	FEAT_PICKER_NOTE = "Plain interface: the right button has no secure action; it only saves your choice.",
 	FEAT_STANCE_MACROS = "Stance macros for action bars",
-	FEAT_STANCE_MACROS_NOTE = "Created and placed on your cursor only when you click; kept in sync with your weapons out of combat. Never run by the addon.",
+	FEAT_STANCE_MACROS_NOTE = "Created and kept in sync with your weapons automatically (can be turned off), out of combat only and once your macros are loaded. Never run by the addon.",
+	FEAT_MINIMAP = "Minimap button and AddOns menu entry",
+	FEAT_MINIMAP_NOTE = "Plain interface that only opens the settings.",
 	FEAT_AUTO_SWAP = "Automatic weapon or stance swap",
 	FEAT_AUTO_SWAP_NOTE = "Would play the game for you. Forbidden by design.",
 	FEAT_MACRO_TEXT = "Macro builder (text, preview, copy)",

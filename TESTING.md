@@ -27,7 +27,7 @@ python tests/run_tests.py
 | 2. TOC | `## Interface: 16001`; every listed file exists; no Lua file is left out. |
 | 3. Locales | `frFR` defines exactly the `enUS` keys; `%d`/`%s` placeholders match; every string the code uses exists. |
 | 4. Static audit (`tools/audit.py`) | No forbidden API (automation, code execution, combat log, chat, bindings, hooks, CVars); no `:Click()`; every global call, `C_` API and registered event exists in Forever 1.60.1.70862. Also runs a self-test proving the audit catches 11 kinds of violation. |
-| 5. Behaviour tests (`tests/test_*.lua`) | Twelve test files, run against the mock in `tests/wowmock.lua` (see below). |
+| 5. Behaviour tests (`tests/test_*.lua`) | Thirteen test files, run against the mock in `tests/wowmock.lua` (see below). |
 
 What the mock (`tests/wowmock.lua`) enforces:
 - **Widget methods:** every PascalCase method the addon calls must be in Blizzard's documented widget API for 1.60.1 (`tests/data/forever_api.lua`) or in a short list of verified Blizzard mixins. Anything else raises an error.
@@ -37,7 +37,7 @@ What the mock (`tests/wowmock.lua`) enforces:
 - **Global writes:** every global the addon writes is recorded and compared with the allowed list.
 
 ### Latest offline result
-Run on 2026-11-08 against API data for build 1.60.1.70862: **118 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 106 behaviour tests in 12 files. The suite covers:
+Run on 2026-11-08 against API data for build 1.60.1.70862: **130 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 118 behaviour tests in 13 files. The suite covers:
 - **Boot:** loads on Warriors only; creates only its saved variables, slash command and key-binding labels as globals; disabled modules release their events and actions; Options entry and Escape handler.
 - **Bars:** readable values and threshold colors; other power types ignored; hidden values go to widgets with no Lua math; the client's curves drive color and glow; the color curve matches the Lua color rules; low-health sound is edge-triggered and throttled; sound pauses while values are hidden; visibility and opacity rules; attachment to the health bar; preview mode switches off when combat starts.
 - **Swing:** progress and countdown; updater stops when idle; off-hand bar only with an off-hand weapon; hidden or invalid durations ignored; haste rescale; no rescale when attack speed is hidden; weapon-swap restart; sound; range check off by default; disabled module ignores swings; game-option button refused in combat.
@@ -85,9 +85,20 @@ Run on 2026-11-08 against API data for build 1.60.1.70862: **118 passed, 0 faile
   - changing the anchor keeps the frame in place;
   - dragging keeps the anchor;
   - the All modules handle sets the global offset;
-  - `/warriormaster` is the command and `/wm` is left to the game;
+  - `/warrior` is the command and `/wm` is left to the game;
   - font styles apply font, size and outline together;
   - short controls share rows.
+- **Stance macros, minimap and compartment:**
+  - nothing is created before the macros are loaded;
+  - after loading, one macro per known stance, with no duplicates (also through the fallback timer);
+  - macros follow the setup;
+  - a deleted macro is not recreated until its setup changes;
+  - the option turns them off and on;
+  - in combat they wait for the end of combat;
+  - full slots are reported once;
+  - the minimap button sits on the edge, opens the settings, locks and unlocks, can be dragged and hidden;
+  - the compartment entry opens the settings;
+  - nothing appears on other classes.
 - **Escape and taint:**
   - nothing is ever added to Blizzard's Escape handler list or `UISpecialFrames`;
   - Escape closes the dropdown, then the window, without reaching the game;
@@ -108,20 +119,20 @@ Run on 2026-11-08 against API data for build 1.60.1.70862: **118 passed, 0 faile
 **Before you start:**
 1. Install the addon (see README).
 2. In the game options, turn on *Display Lua errors*, or use BugSack.
-3. After each section, type `/warriormaster errors`. It should print "No errors recorded this session".
+3. After each section, type `/warrior errors`. It should print "No errors recorded this session".
 
-Keep the output of `/warriormaster diag` from your first login. It reports, for your client, which values are hidden, whether the native swing event arrives, and how many queued secure changes are waiting.
+Keep the output of `/warrior diag` from your first login. It reports, for your client, which values are hidden, whether the native swing event arrives, and how many queued secure changes are waiting.
 
 Each test lists what to do, what you should see, and what counts as a failure.
 
 ### T1 - Loading
-- **Do:** log in on a Warrior, then type `/warriormaster`.
+- **Do:** log in on a Warrior, then type `/warrior`.
 - **Expected:** the chat says nothing alarming. The settings window opens. The health, rage, swing and stance displays appear under your character.
 - **Failure:** a Lua error, a missing window, or the message "only active on Warrior characters" on a Warrior.
-- **Also:** log in on another class. Nothing should appear, and `/warriormaster` should print the Warrior-only message.
+- **Also:** log in on another class. Nothing should appear, and `/warrior` should print the Warrior-only message.
 
 ### T2 - Diagnostics
-- **Do:** type `/warriormaster diag` out of combat, then again during a fight against a training dummy or a mob.
+- **Do:** type `/warrior diag` out of combat, then again during a fight against a training dummy or a mob.
 - **Expected:** the lines `Hidden values: ...` and `APIs: curves yes | native swing yes ...`.
 - **Report:** please send both outputs. They confirm which values the real client hides on Forever.
 
@@ -134,7 +145,7 @@ Each test lists what to do, what you should see, and what counts as a failure.
 - **If the client hides rage** (`rage yes` in diag): the bar, number, colors and glow must still work in combat. Sound alerts may stay silent, which is expected.
 - **Failure:**
   - the bar stays empty or frozen;
-  - the text is blank in combat while the bar moves (report `/warriormaster diag`);
+  - the text is blank in combat while the bar moves (report `/warrior diag`);
   - the color never changes in combat (curves not accepted: report `curve failures` from diag);
   - a Lua error.
 
@@ -148,7 +159,7 @@ Each test lists what to do, what you should see, and what counts as a failure.
 - **Failure:** wrong values, no glow, repeated sounds, or errors.
 
 ### T5 - Swing timer (most important check)
-- **Do:** equip a weapon, attack a training dummy for 20 seconds, then type `/warriormaster diag`.
+- **Do:** equip a weapon, attack a training dummy for 20 seconds, then type `/warrior diag`.
 - **Expected:**
   - The main-hand bar refills with each swing, and the countdown matches your weapon speed.
   - The diag line `PLAYER_SWING events N` shows N greater than 0, with `hidden 0`.
@@ -228,8 +239,21 @@ Each test lists what to do, what you should see, and what counts as a failure.
   - Turn off "Keep on screen" and drag a bar half off screen; turn it on again and it comes back.
 - **Fonts:** try each font style and each font. Note any font that shows boxes instead of letters, especially accented letters in French.
 
+### T10d - Stance macros and minimap button (1.1.0)
+- **Stance macros:** log in, open `/macro` and go to the Character tab. You should see WM Battle, WM Defensive and WM Berserker, only for the stances you know, and only once even after `/reload`.
+  - Put one on an action bar and press it: same result as the stance button.
+  - Change that stance's weapons (right-click the stance button). The macro text updates after combat if you were fighting.
+  - Delete one and `/reload`: it stays deleted until you change that stance's weapons.
+- **Minimap button:**
+  - The Warrior Master icon sits on the minimap edge.
+  - Left-click opens or closes the settings; right-click locks or unlocks the frames.
+  - Drag it around the minimap, `/reload`, and it stays where you put it.
+  - The General page switch hides it.
+  - The game's AddOns menu next to the minimap also lists Warrior Master.
+- **Command:** `/warrior` opens the settings.
+
 ### T10c - Escape never blocked (fixed in 1.0.1)
-1. Open `/warriormaster` and the weapon picker once, then close them.
+1. Open `/warrior` and the weapon picker once, then close them.
 2. Start casting something with a cast time (or click a ground-targeted ability), then press **Escape**. The cast or targeting must stop normally.
 3. Do the same in combat.
 4. **Failure:** any "blocked" message naming Warrior Master, or naming `SpellStopCasting()` / `SpellStopTargeting()`.
@@ -238,12 +262,12 @@ Each test lists what to do, what you should see, and what counts as a failure.
 Play normally for a while: dungeon, group, open bags, change talents if applicable, `/reload` in and out of combat.
 
 - **Expected:** no "Interface action failed because of an AddOn" message, and no blocked-action warning naming Warrior Master.
-- **If one appears:** note what you were doing and send `/warriormaster diag` and `/warriormaster errors`.
+- **If one appears:** note what you were doing and send `/warrior diag` and `/warrior errors`.
 
 ### Reporting results
 For each test, please send:
 - PASS or FAIL;
-- the `/warriormaster diag` output;
+- the `/warrior diag` output;
 - any error text;
 - a screenshot if the issue is visual.
 

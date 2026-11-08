@@ -286,6 +286,19 @@ function DB:ImportProfile(text, name)
 end
 
 -- Account-wide settings -------------------------------------------------------------------------
+function DB:GetGlobal(path)
+	return U.GetPath(ns.db.global, path)
+end
+
+function DB:SetGlobal(path, value)
+	local leaf = S.GetLeaf(S.global, path)
+	if not leaf then
+		error("unknown account setting: " .. tostring(path), 2)
+	end
+	U.SetPath(ns.db.global, path, U.DeepCopy(S.SanitizeLeaf(leaf, value)))
+	ns:SendMessage("GLOBAL_SETTINGS_CHANGED", path)
+end
+
 function DB:SetLanguage(code)
 	if not U.IndexOf(S.LANGUAGES, code) then
 		return false

@@ -287,6 +287,7 @@ S.profile = {
 		point = P("CENTER", "CENTER", 0, -285),
 		clamp = B(true),
 		equipWeapons = B(true),
+		autoMacros = B(true),
 		useItemNames = B(false),
 		loadoutIcons = B(true),
 		tooltips = B(true),
@@ -319,6 +320,10 @@ S.char = {
 
 S.global = {
 	language = E("auto", S.LANGUAGES),
+	minimap = {
+		show = B(true),
+		angle = N(200, -360, 360, 1),
+	},
 }
 
 -- Validation --------------------------------------------------------------------------------

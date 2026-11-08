@@ -34,7 +34,8 @@ The same list appears in game on the **Safety & About** page and comes from `Cor
 | Enemy swing timer | **UNSUPPORTED** | Would need the combat log, which is blocked. `UNIT_COMBAT` cannot tell which enemy swung, so a timer built on it would be misleading. Not implemented. |
 | Stance buttons | RESTRICTED | `SecureActionButtonTemplate`, type `spell`. They act only on your click or binding. Created, changed, moved and hidden only out of combat. |
 | Weapon picker (right-click) | SAFE | Plain UI. The right mouse button is given the secure type `none`, which is not an action, so a right-click never casts or equips anything. The picker only saves your choice. |
-| Stance macros for action bars | RESTRICTED | `CreateMacro`/`EditMacro`/`PickupMacro`, only when you click or drag, and only out of combat. Existing "WM ..." macros are re-synced with your weapons out of combat. Same text as the stance button's click action, validated, never run by the addon. |
+| Stance macros for action bars | RESTRICTED | Character macros "WM Battle/Defensive/Berserker" with the same text as each stance button's click action, validated, and never run by the addon. Created with `CreateMacro` only once the game has loaded your macros (`UPDATE_MACROS`, so no duplicates), and updated with `EditMacro` when the setup changes. Out of combat only, and can be turned off. `PickupMacro` puts one on your cursor only when you click or drag. A macro you delete is not recreated until that stance's setup changes. Editing macros is interface configuration, not a game action. |
+| Minimap button and AddOns menu entry | SAFE | Plain UI parented to the minimap and the TOC `AddonCompartmentFunc` entry; both only open the settings or lock and unlock frames. |
 | Weapons with a stance | RESTRICTED | Same secure click with type `macro`: `/cast [nostance:N] Stance` followed by `/equipslot` or `/equipset` lines that you chose. |
 | Automatic weapon or stance swap on events | **UNSUPPORTED** | That would play the game for you. Forbidden by design. A stance change only updates the highlight. |
 | Macro builder: text, preview, copy | SAFE | Text generation and validation only. |
@@ -89,7 +90,7 @@ Each item below is enforced by the static audit (`tools/audit.py`), which also t
 - **Hidden values:** `issecretvalue` is checked before any comparison or arithmetic (`Compat.ReadableNumber` and `ReadableBool`).
 - **Saved data:** profiles, character data and imports are rebuilt through `Core/Schema.lua`. That fixes wrong types, NaN or infinite numbers, out-of-range values, unknown enums, oversized strings and unknown keys.
 - **Import limits:** 64 KB of text, nesting depth 12, 4,000 items, strings of 1,024 bytes, a checksum, and no code evaluation.
-- **Errors:** event handlers run under `pcall`. Each error is recorded (`/warriormaster errors`) and forwarded once to the game's error handler, so it stays visible rather than being swallowed.
+- **Errors:** event handlers run under `pcall`. Each error is recorded (`/warrior errors`) and forwarded once to the game's error handler, so it stays visible rather than being swallowed.
 - **Blocked actions:** if the client reports `ADDON_ACTION_BLOCKED` or `ADDON_ACTION_FORBIDDEN` for this addon, a chat warning is printed.
 - **Event volume:** each module has its own event frame. A disabled module unregisters everything and cannot act. Swing updates run only while a swing is in progress. Bursts of bag and item events are merged into one rebuild.
 - **Message loops:** internal messages stop at a depth of 8.
@@ -117,4 +118,4 @@ If another addon has loaded LibSharedMedia-3.0, Warrior Master reads its list of
 - During development the game was never launched or controlled, and no debugger was attached. All validation is offline (see TESTING.md).
 
 ## 6. Reporting a problem
-Run `/warriormaster diag` and `/warriormaster errors` in game and share the output. If the game ever shows "Interface action failed because of an AddOn" or a blocked-action warning naming Warrior Master, disable the module concerned and report it. It will be treated as a bug to fix, never worked around.
+Run `/warrior diag` and `/warrior errors` in game and share the output. If the game ever shows "Interface action failed because of an AddOn" or a blocked-action warning naming Warrior Master, disable the module concerned and report it. It will be treated as a bug to fix, never worked around.

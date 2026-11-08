@@ -1,6 +1,6 @@
 --[[
 Warrior Master - Core/Slash.lua
-/warriormaster (and the short alias /uw) commands, plus diagnostics.
+/warrior (also /warriormaster and /uw) commands, plus diagnostics.
 /wm is not used: on WoW Forever it is the game's own world-marker command,
 and the game always runs its built-in commands before any addon's.
 ]]
@@ -9,8 +9,9 @@ local ADDON_NAME, ns = ...
 local Compat = ns.Compat
 local format = string.format
 
-SLASH_WARRIORMASTER1 = "/warriormaster"
-SLASH_WARRIORMASTER2 = "/uw"
+SLASH_WARRIORMASTER1 = "/warrior"
+SLASH_WARRIORMASTER2 = "/warriormaster"
+SLASH_WARRIORMASTER3 = "/uw"
 
 local function yesNo(value)
 	if value == nil then

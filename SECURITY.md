@@ -81,7 +81,8 @@ Each item below is enforced by the static audit (`tools/audit.py`), which also t
 - Combat log: `CombatLogGetCurrentEventInfo`, or any `COMBAT_LOG_EVENT*` string.
 - Communication: `SendChatMessage`, `SendAddonMessage`, `C_ChatInfo`, `C_BattleNet`.
 - Bindings, hooks and secure drivers: `SetBinding*`, `SetOverrideBinding*`, `hooksecurefunc`, `RegisterStateDriver`, `SecureHandlerWrapScript`.
-- Game settings and Blizzard tables: `SetCVar` and modifications of `UISpecialFrames` or `StaticPopupDialogs`. Both have one documented, line-marked exception: the swing-option button, and the Escape fallback for clients without `RegisterGameMenuEscHandler`.
+- Game settings: `SetCVar`, with one documented, line-marked exception (the swing-option button).
+- Blizzard's internal lists: `RegisterGameMenuEscHandler`, `UISpecialFrames` and `StaticPopupDialogs`, with no exception (see 4.1).
 
 ## 4. Runtime safeguards
 - **API presence:** every version-sensitive API is looked up in `Core/Compat.lua` and wrapped in `pcall`. A missing API turns the dependent feature off.
@@ -92,9 +93,21 @@ Each item below is enforced by the static audit (`tools/audit.py`), which also t
 - **Blocked actions:** if the client reports `ADDON_ACTION_BLOCKED` or `ADDON_ACTION_FORBIDDEN` for this addon, a chat warning is printed.
 - **Event volume:** each module has its own event frame. A disabled module unregisters everything and cannot act. Swing updates run only while a swing is in progress. Bursts of bag and item events are merged into one rebuild.
 - **Message loops:** internal messages stop at a depth of 8.
-- **Taint:** no Blizzard frame or function is hooked, modified or re-anchored. The settings window uses its own widgets, not `UIDropDownMenu`. Escape is handled through Blizzard's `securecallfunction`-based handler list.
+- **Taint:**
+  - No Blizzard frame or function is hooked, modified or re-anchored, and nothing is added to Blizzard's internal lists.
+  - The settings window uses its own widgets, not `UIDropDownMenu`.
+  - Escape is handled by each window's own keyboard script, and keyboard capture is off during combat (see 4.1).
 
-### 4.1 Optional SharedMedia
+### 4.1 Escape key and taint (fixed in 1.0.1)
+In 1.0.0, the settings window and the weapon picker added their own handler to Blizzard's Escape list with `RegisterGameMenuEscHandler`. That function inserts into and re-sorts a table that Blizzard's own handlers live in, and doing that from addon code taints the table. Blizzard's "Casting" Escape handler (`Blizzard_Game/Shared/Game.lua`) calls `SpellStopCasting()` and `SpellStopTargeting()`. Once the table was tainted, pressing Escape to stop a cast or cancel targeting was blocked, and the game blamed Warrior Master, even though the addon never calls those functions itself.
+
+The fix in 1.0.1:
+- Warrior Master no longer calls `RegisterGameMenuEscHandler`, and never writes to `UISpecialFrames`. The audit forbids both, plus `SpellStopCasting`, `SpellStopTargeting`, `SpellTargetUnit` and `ClearTarget`.
+- Each window listens to the keyboard itself. `OnKeyDown` stops only Escape from reaching the game (`SetPropagateKeyboardInput(false)`), `OnKeyUp` closes the window, and every other key passes through.
+- Addons cannot change keyboard propagation in combat, so keyboard capture is switched off on `PLAYER_REGEN_DISABLED`. During combat, Escape goes straight to the game (stop casting, cancel targeting, menu), and the window closes with its X button.
+- Tests check that no Blizzard Escape handler is ever registered, that `UISpecialFrames` stays empty, and that no keyboard call is made in combat.
+
+### 4.2 Optional SharedMedia
 If another addon has loaded LibSharedMedia-3.0, Warrior Master reads its list of status bar textures and fonts. It only looks up file names through `LibStub("LibSharedMedia-3.0", true)`, inside `pcall`. Nothing is registered, modified or executed, and the addon works the same without it.
 
 ## 5. Privacy and integrity

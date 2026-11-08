@@ -88,6 +88,64 @@ local function setDimmed(frame, dimmed)
 	frame:SetAlpha(dimmed and 0.4 or 1)
 end
 
+-- Escape to close -------------------------------------------------------------------------------------
+-- The frame listens to the keyboard itself: Escape is kept from the game
+-- (SetPropagateKeyboardInput(false)) and closes the frame; every other key
+-- goes on to the game as usual. Nothing is added to Blizzard's Escape
+-- handler list or UISpecialFrames, so Blizzard's own Escape actions
+-- (stopping a cast, cancelling targeting, the game menu) stay untainted.
+-- SetPropagateKeyboardInput cannot be used by addons in combat, so keyboard
+-- capture is switched off for the whole fight (Escape then simply opens the
+-- game menu, and the window closes with its X button).
+local escapeFrames = {}
+local escapeWatcher = ns.EventMixin.Embed({})
+
+local function armKeyboard(frame)
+	if ns.Compat.InCombatLockdown() then
+		frame:EnableKeyboard(false)
+		return
+	end
+	frame:SetPropagateKeyboardInput(true)
+	frame:EnableKeyboard(true)
+end
+
+function escapeWatcher:PLAYER_REGEN_DISABLED()
+	for _, frame in ipairs(escapeFrames) do
+		frame:EnableKeyboard(false)
+	end
+end
+
+function escapeWatcher:PLAYER_REGEN_ENABLED()
+	for _, frame in ipairs(escapeFrames) do
+		if frame:IsShown() then
+			armKeyboard(frame)
+		end
+	end
+end
+
+function UI.EscapeToClose(frame, onEscape)
+	if #escapeFrames == 0 then
+		escapeWatcher:RegisterEvent("PLAYER_REGEN_DISABLED")
+		escapeWatcher:RegisterEvent("PLAYER_REGEN_ENABLED")
+	end
+	escapeFrames[#escapeFrames + 1] = frame
+	frame:HookScript("OnShow", armKeyboard)
+	frame:SetScript("OnKeyDown", function(self, key)
+		if ns.Compat.InCombatLockdown() then
+			return
+		end
+		self:SetPropagateKeyboardInput(key ~= "ESCAPE")
+	end)
+	frame:SetScript("OnKeyUp", function(self, key)
+		if key ~= "ESCAPE" or ns.Compat.InCombatLockdown() then
+			return
+		end
+		self:SetPropagateKeyboardInput(true)
+		onEscape()
+	end)
+	armKeyboard(frame)
+end
+
 -- Checkbox -----------------------------------------------------------------------------------------
 function UI.Checkbox(page, o)
 	local f = CreateFrame("Button", nil, page.content)

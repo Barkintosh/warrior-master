@@ -282,6 +282,14 @@ end
 function Object:EnableMouse(e) self.__mouse = e end
 function Object:EnableMouseWheel(e) self.__wheel = e end
 function Object:EnableKeyboard(e) self.__keyboard = e end
+function Object:SetPropagateKeyboardInput(propagate)
+	-- Addons cannot change keyboard propagation during combat.
+	if Mock.state.lockdown then
+		Mock.blocked[#Mock.blocked + 1] = "SetPropagateKeyboardInput"
+		error("ADDON_ACTION_BLOCKED: SetPropagateKeyboardInput in combat", 2)
+	end
+	self.__propagate = propagate
+end
 function Object:SetMovable(m) self.__movable = m end
 function Object:SetToplevel() end
 function Object:RegisterForDrag() end
@@ -919,7 +927,7 @@ end
 C_AddOns = {}
 function C_AddOns.GetAddOnMetadata(addon, field)
 	if field == "Version" then
-		return "1.0.0"
+		return "1.0.1"
 	end
 end
 function geterrorhandler()
@@ -936,17 +944,46 @@ function Settings.RegisterAddOnCategory(category)
 	Settings.categories[#Settings.categories + 1] = category
 end
 GameMenuEscPriority = { AddOn = 8 }
+UISpecialFrames = {}
 Mock.escHandlers = {}
 function RegisterGameMenuEscHandler(priority, handler)
 	Mock.escHandlers[#Mock.escHandlers + 1] = handler
 end
-function Mock.PressEscape()
-	for _, handler in ipairs(Mock.escHandlers) do
-		if handler() then
-			return true
+-- Simulates a key press the way the client delivers it: visible frames
+-- with the keyboard enabled get OnKeyDown first; if one stops propagation,
+-- the key never reaches the game (bindings, Escape handlers).
+function Mock.PressKey(key)
+	local consumed = false
+	for i = #Mock.frames, 1, -1 do
+		local frame = Mock.frames[i]
+		if not consumed and frame.__keyboard and frame:IsVisible() then
+			if frame.__scripts.OnKeyDown then
+				frame.__scripts.OnKeyDown(frame, key)
+			end
+			if frame.__propagate == false then
+				consumed = true
+				if frame.__scripts.OnKeyUp then
+					frame.__scripts.OnKeyUp(frame, key)
+				end
+			end
+		end
+	end
+	if consumed then
+		return true
+	end
+	Mock.gameKeys = (Mock.gameKeys or 0) + 1
+	if key == "ESCAPE" then
+		for _, handler in ipairs(Mock.escHandlers) do
+			if handler() then
+				return true
+			end
 		end
 	end
 	return false
+end
+
+function Mock.PressEscape()
+	return Mock.PressKey("ESCAPE")
 end
 
 -- Events that exist on the client but are dispatched internally in 12.x

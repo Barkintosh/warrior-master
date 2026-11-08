@@ -98,12 +98,12 @@ The default style reproduces Blizzard's own Forever UI. These atlases and fonts 
 ### 3.7 Removed or changed APIs
 - `GetSpellInfo` and `GetItemInfo` were removed at beta. Warrior Master uses `C_Spell.*` and `C_Item.*` throughout.
 - `GetMacroIndexByName` and `IsPlayerSpell` are not used by any Blizzard code of this build and are absent from the docs, so they are avoided. Replacements: a scan with `GetMacroInfo`, and `C_SpellBook.IsSpellKnown`.
-- Escape handling: Forever adds `RegisterGameMenuEscHandler(priority, handler)`, which calls handlers through `securecallfunction`. Warrior Master uses it, and falls back to `UISpecialFrames` only if it is missing.
+- Escape handling: Forever adds `RegisterGameMenuEscHandler(priority, handler)`. It must **not** be used by addons: it inserts into and re-sorts Blizzard's handler table, which taints it, and Blizzard's Casting handler then gets `SpellStopCasting()`/`SpellStopTargeting()` blocked. Warrior Master uses the keyboard pattern Forever addons such as Auctionator use (`SetPropagateKeyboardInput` in `OnKeyDown`, close in `OnKeyUp`), and only out of combat. See SECURITY.md 4.1.
 
 ### 3.8 Legacy globals verified in Blizzard code
 These globals are absent from the generated docs but used by Blizzard's 1.60.1 UI, so they exist. The audit (`tools/audit.py`, `LEGACY_GLOBALS`) records where each one is used:
 
-`CreateFrame`, `InCombatLockdown`, `GetInventoryItemID`, `GetNumShapeshiftForms`, `GetShapeshiftFormInfo`, `GetShapeshiftFormCooldown`, `GetCVarBool`, `CreateMacro`, `EditMacro`, `GetNumMacros`, `GetMacroInfo`, `PlaySound`, `GetBindingKey`, `geterrorhandler`, `CreateColor`, `RegisterGameMenuEscHandler`, `UnitAttackSpeed`.
+`CreateFrame`, `InCombatLockdown`, `GetInventoryItemID`, `GetNumShapeshiftForms`, `GetShapeshiftFormInfo`, `GetShapeshiftFormCooldown`, `GetCVarBool`, `CreateMacro`, `EditMacro`, `GetNumMacros`, `GetMacroInfo`, `PickupMacro`, `PlaySound`, `GetBindingKey`, `geterrorhandler`, `CreateColor`, `UnitAttackSpeed`.
 
 ## 4. Reference addons
 

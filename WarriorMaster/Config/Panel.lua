@@ -192,23 +192,16 @@ function Config:Create()
 	self.thumb:SetColorTexture(Theme.Color("accent"))
 	self.track = track
 
-	-- Escape closes the dropdown first, then the window. WoW Forever exposes
-	-- RegisterGameMenuEscHandler (called through securecallfunction); older
-	-- clients use the UISpecialFrames list.
-	if RegisterGameMenuEscHandler and GameMenuEscPriority and GameMenuEscPriority.AddOn then
-		RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, function()
-			if UI.CloseMenu() then
-				return true
-			end
-			if f:IsShown() then
-				Config:Hide()
-				return true
-			end
-			return false
-		end)
-	elseif UISpecialFrames then -- wm-audit: allow UISpecialFrames (fallback for clients without the handler)
-		table.insert(UISpecialFrames, "WarriorMasterConfig") -- wm-audit: allow UISpecialFrames
-	end
+	-- Escape closes the dropdown first, then the window. This is handled by
+	-- the window's own keyboard script (UI.EscapeToClose), never by adding
+	-- to Blizzard's Escape handler list or UISpecialFrames: writing to those
+	-- tables from addon code taints Blizzard's Escape handling, which then
+	-- gets SpellStopCasting()/SpellStopTargeting() blocked.
+	UI.EscapeToClose(f, function()
+		if not UI.CloseMenu() then
+			Config:Hide()
+		end
+	end)
 
 	f:SetScript("OnHide", function()
 		UI.CloseMenu()

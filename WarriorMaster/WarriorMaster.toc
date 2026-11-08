@@ -3,7 +3,7 @@
 ## Notes: All-in-one Warrior toolkit: rage and health bars, swing timer, stance and weapon manager, macro builder.
 ## Notes-frFR: Boîte à outils tout-en-un pour Guerrier : barres de rage et de vie, minuteur d'attaque, postures et armes, générateur de macros.
 ## Author: buzk
-## Version: 1.0.0
+## Version: 1.0.1
 ## SavedVariables: WarriorMasterDB
 ## SavedVariablesPerCharacter: WarriorMasterCharDB
 ## IconTexture: Interface\Icons\Ability_Warrior_BattleShout

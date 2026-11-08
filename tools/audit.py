@@ -37,6 +37,8 @@ FORBIDDEN = {
     "AutoEquipCursorItem": "automatic equipment change", "UseEquipmentSet": "automatic equipment change",
     "TargetUnit": "targeting automation", "AttackTarget": "combat automation",
     "StartAttack": "combat automation", "SpellStopCasting": "combat automation",
+    "SpellStopTargeting": "combat automation", "SpellTargetUnit": "combat automation",
+    "ClearTarget": "targeting automation",
     "SecureCmdUseItem": "secure command from insecure code",
     # Combat log (blocked on Forever)
     "CombatLogGetCurrentEventInfo": "combat log not available to addons on Forever",
@@ -50,9 +52,13 @@ FORBIDDEN = {
     "SecureHandlerWrapScript": "restricted environment snippets",
     # Settings
     "SetCVar": "changes game settings",
-    # Blizzard tables the addon must not modify
+    # Blizzard tables the addon must not modify: writing to them from addon
+    # code taints Blizzard's own handling (for example, Escape then gets
+    # SpellStopCasting()/SpellStopTargeting() blocked and blamed on the addon).
     "UISpecialFrames": "modifies a Blizzard table",
     "StaticPopupDialogs": "modifies a Blizzard table",
+    "RegisterGameMenuEscHandler": "adds addon code to Blizzard's Escape handler list (taint)",
+    "GameMenuEscPriority": "Blizzard's Escape handler list (taint)",
 }
 
 FORBIDDEN_STRINGS = {
@@ -237,6 +243,9 @@ SELF_TEST_BAD = {
     "unknown event": 'f:RegisterEvent("NOT_A_REAL_EVENT")',
     "binding change": "SetOverrideBindingClick(owner, true, 'F', 'Btn')",
     "hook": "hooksecurefunc('ToggleGameMenu', fn)",
+    "escape handler": "RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, fn)",
+    "special frames": "table.insert(UISpecialFrames, 'MyFrame')",
+    "stop targeting": "SpellStopTargeting()",
 }
 SELF_TEST_GOOD = "local x = math.floor(1.5) -- CastSpellByName in a comment\nlocal s = 'CastSpellByID in a string'\nprint(x, s)"
 

@@ -27,7 +27,7 @@ python tests/run_tests.py
 | 2. TOC | `## Interface: 16001`; every listed file exists; no Lua file is left out. |
 | 3. Locales | `frFR` defines exactly the `enUS` keys; `%d`/`%s` placeholders match; every string the code uses exists. |
 | 4. Static audit (`tools/audit.py`) | No forbidden API (automation, code execution, combat log, chat, bindings, hooks, CVars); no `:Click()`; every global call, `C_` API and registered event exists in Forever 1.60.1.70862. Also runs a self-test proving the audit catches 11 kinds of violation. |
-| 5. Behaviour tests (`tests/test_*.lua`) | Eleven test files, run against the mock in `tests/wowmock.lua` (see below). |
+| 5. Behaviour tests (`tests/test_*.lua`) | Twelve test files, run against the mock in `tests/wowmock.lua` (see below). |
 
 What the mock (`tests/wowmock.lua`) enforces:
 - **Widget methods:** every PascalCase method the addon calls must be in Blizzard's documented widget API for 1.60.1 (`tests/data/forever_api.lua`) or in a short list of verified Blizzard mixins. Anything else raises an error.
@@ -37,7 +37,7 @@ What the mock (`tests/wowmock.lua`) enforces:
 - **Global writes:** every global the addon writes is recorded and compared with the allowed list.
 
 ### Latest offline result
-Run on 2026-11-08 against API data for build 1.60.1.70862: **114 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 102 behaviour tests in 11 files. The suite covers:
+Run on 2026-11-08 against API data for build 1.60.1.70862: **118 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 106 behaviour tests in 12 files. The suite covers:
 - **Boot:** loads on Warriors only; creates only its saved variables, slash command and key-binding labels as globals; disabled modules release their events and actions; Options entry and Escape handler.
 - **Bars:** readable values and threshold colors; other power types ignored; hidden values go to widgets with no Lua math; the client's curves drive color and glow; the color curve matches the Lua color rules; low-health sound is edge-triggered and throttled; sound pauses while values are hidden; visibility and opacity rules; attachment to the health bar; preview mode switches off when combat starts.
 - **Swing:** progress and countdown; updater stops when idle; off-hand bar only with an off-hand weapon; hidden or invalid durations ignored; haste rescale; no rescale when attack speed is hidden; weapon-swap restart; sound; range check off by default; disabled module ignores swings; game-option button refused in combat.
@@ -88,6 +88,11 @@ Run on 2026-11-08 against API data for build 1.60.1.70862: **114 passed, 0 faile
   - `/warriormaster` is the command and `/wm` is left to the game;
   - font styles apply font, size and outline together;
   - short controls share rows.
+- **Escape and taint:**
+  - nothing is ever added to Blizzard's Escape handler list or `UISpecialFrames`;
+  - Escape closes the dropdown, then the window, without reaching the game;
+  - other keys keep reaching the game;
+  - in combat, keyboard capture is off and Escape goes to the game, with no keyboard call blocked.
 - **Mock self-tests:** they prove the mock really rejects undocumented methods, unknown events, combat-blocked calls and math on hidden values, and that nothing runs `OnUpdate` while idle.
 
 ### Limits of offline testing
@@ -203,7 +208,7 @@ Each test lists what to do, what you should see, and what counts as a failure.
   - **Import** it under a new name; it should be identical.
   - Paste random text and import it: you should get a clear error and nothing else.
 - **Language:** set *Addon language* to Français. The window switches to French.
-- **Escape** closes the settings window, and closes an open dropdown first.
+- **Escape** closes the settings window, and closes an open dropdown first. Out of combat only: in combat, Escape is left to the game.
 - **Options entry:** *Options > AddOns > Warrior Master* shows a button that opens the window.
 - **Preview mode:** the bars animate. Entering combat turns preview mode off.
 
@@ -222,6 +227,12 @@ Each test lists what to do, what you should see, and what counts as a failure.
   - Change a module's screen anchor: it must not jump.
   - Turn off "Keep on screen" and drag a bar half off screen; turn it on again and it comes back.
 - **Fonts:** try each font style and each font. Note any font that shows boxes instead of letters, especially accented letters in French.
+
+### T10c - Escape never blocked (fixed in 1.0.1)
+1. Open `/warriormaster` and the weapon picker once, then close them.
+2. Start casting something with a cast time (or click a ground-targeted ability), then press **Escape**. The cast or targeting must stop normally.
+3. Do the same in combat.
+4. **Failure:** any "blocked" message naming Warrior Master, or naming `SpellStopCasting()` / `SpellStopTargeting()`.
 
 ### T11 - Taint and blocked-action watch
 Play normally for a while: dungeon, group, open bags, change talents if applicable, `/reload` in and out of combat.

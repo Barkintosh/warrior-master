@@ -170,15 +170,11 @@ function Picker:Create()
 	f.hint:SetWordWrap(true)
 	f.hint:SetText(L.PICKER_HINT)
 
-	if RegisterGameMenuEscHandler and GameMenuEscPriority and GameMenuEscPriority.AddOn then
-		RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, function()
-			if f:IsShown() then
-				Picker:Hide()
-				return true
-			end
-			return false
-		end)
-	end
+	-- Escape closes the picker through its own keyboard script (see
+	-- UI.EscapeToClose); Blizzard's Escape handler list is never touched.
+	ns.UI.EscapeToClose(f, function()
+		Picker:Hide()
+	end)
 	return f
 end
 

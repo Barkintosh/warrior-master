@@ -16,7 +16,7 @@ local ADDON_NAME, ns = ...
 
 ns.ADDON_NAME = ADDON_NAME
 ns.TITLE = "Warrior Master"
-ns.VERSION = "1.0.0"
+ns.VERSION = "1.0.1"
 
 ns.modules = {}
 ns.moduleOrder = {}

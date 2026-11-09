@@ -315,6 +315,7 @@ S.profile = {
 		point = P("CENTER", "CENTER", 0, -285),
 		clamp = B(true),
 		equipWeapons = B(true),
+		useGameBar = B(false),
 		autoMacros = B(true),
 		useItemNames = B(false),
 		loadoutIcons = B(true),

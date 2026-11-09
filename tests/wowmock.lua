@@ -256,7 +256,7 @@ function Object:SetPoint(...)
 	self.__points[#self.__points + 1] = args
 end
 function Object:ClearAllPoints() self.__points = {} end
-function Object:SetAllPoints() self.__points = { { "ALL" } } end
+function Object:SetAllPoints(relative) self.__points = { { "ALL", relative or self.__parent } } end
 function Object:GetNumPoints() return #self.__points end
 function Object:GetPoint(i)
 	local p = self.__points[i or 1]

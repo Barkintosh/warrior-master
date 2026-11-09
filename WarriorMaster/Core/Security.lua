@@ -35,6 +35,7 @@ Security.features = {
 	{ key = "FEAT_STANCE", status = "RESTRICTED" },
 	{ key = "FEAT_WEAPONS", status = "RESTRICTED" },
 	{ key = "FEAT_PICKER", status = "SAFE" },
+	{ key = "FEAT_GAME_STANCE_BAR", status = "RESTRICTED" },
 	{ key = "FEAT_STANCE_MACROS", status = "RESTRICTED" },
 	{ key = "FEAT_MACRO_BAR", status = "RESTRICTED" },
 	{ key = "FEAT_MINIMAP", status = "SAFE" },

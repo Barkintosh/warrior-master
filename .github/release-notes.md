@@ -12,7 +12,7 @@ Download **`WarriorMaster-<version>.zip`** below. It contains only the addon. Th
 - **Health and rage bars:** look like the game's own personal resource display by default.
 - **Swing timer:** main hand, off hand and ranged, from the game's own swing event, in the native framed style. It can show only with two-handed or only with one-handed weapons.
 - **Cast bar:** your casts and channels, items included, in the game's own casting-bar look.
-- **Stance buttons:** right-click one to pick its weapons with icons. Left-click (or a key binding) changes stance and equips them. The addon also keeps its own WM Battle, WM Defensive and WM Berserker macros; one button puts them on an action bar for you.
+- **Stance buttons:** right-click one to pick its weapons with icons. Left-click (or a key binding) changes stance and equips them. This can also work right on the game's own stance bar (one option). The addon also keeps its own WM Battle, WM Defensive and WM Berserker macros; one button puts them on an action bar for you.
 - **Macro builder:** 21 Warrior macro templates.
 - **Customization:** 11 visual styles, 10 fonts and 12 font styles, a screen anchor and "keep on screen" per module, a move-everything handle, an automatic vertical layout with gap and order, profiles with import and export, English and French.
 - **Warrior fun:** an occasional execute splash in the settings and a battle cry when you close them (can be turned off).

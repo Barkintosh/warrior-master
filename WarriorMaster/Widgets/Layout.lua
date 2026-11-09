@@ -88,9 +88,16 @@ function Layout:IsEnabled()
 	return cfg ~= nil and cfg.enabled == true
 end
 
+--- True when a module has no frame of its own to place (the stance
+-- buttons sit on the game's stance bar).
+local function onGameBar(key)
+	local module = ns.modules[key]
+	return key == "stance" and module ~= nil and module.UsesGameBar ~= nil and module:UsesGameBar()
+end
+
 --- Whether the layout places this module's frame.
 function Layout:Manages(key)
-	return FRAMES[key] ~= nil and self:IsEnabled()
+	return FRAMES[key] ~= nil and self:IsEnabled() and not onGameBar(key)
 end
 
 --- Places every enabled module. Returns the list of placed module keys.
@@ -105,7 +112,7 @@ function Layout:Apply()
 	local placed = {}
 	for _, key in ipairs(cfg.order) do
 		local module = ns.modules[key]
-		local frame = module and module.enabled and FRAMES[key](module)
+		local frame = module and module.enabled and not onGameBar(key) and FRAMES[key](module)
 		if frame then
 			local mcfg = module:GetConfig()
 			local spot = { point = point, relPoint = "CENTER", x = 0, y = y }

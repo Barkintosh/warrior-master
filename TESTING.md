@@ -27,7 +27,7 @@ python tests/run_tests.py
 | 2. TOC | `## Interface: 16001`; every listed file exists; no Lua file is left out. |
 | 3. Locales | `frFR` defines exactly the `enUS` keys; `%d`/`%s` placeholders match; every string the code uses exists. |
 | 4. Static audit (`tools/audit.py`) | No forbidden API (automation, code execution, combat log, chat, bindings, hooks, CVars); no `:Click()`; every global call, `C_` API and registered event exists in Forever 1.60.1.70862. Also runs a self-test proving the audit catches 11 kinds of violation. |
-| 5. Behaviour tests (`tests/test_*.lua`) | Sixteen test files, run against the mock in `tests/wowmock.lua` (see below). |
+| 5. Behaviour tests (`tests/test_*.lua`) | Seventeen test files, run against the mock in `tests/wowmock.lua` (see below). |
 
 What the mock (`tests/wowmock.lua`) enforces:
 - **Widget methods:** every PascalCase method the addon calls must be in Blizzard's documented widget API for 1.60.1 (`tests/data/forever_api.lua`) or in a short list of verified Blizzard mixins. Anything else raises an error.
@@ -37,7 +37,7 @@ What the mock (`tests/wowmock.lua`) enforces:
 - **Global writes:** every global the addon writes is recorded and compared with the allowed list.
 
 ### Latest offline result
-Run on 2026-11-08 against API data for build 1.60.1.70862: **162 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 150 behaviour tests in 16 files. The suite covers:
+Run on 2026-11-08 against API data for build 1.60.1.70862: **170 passed, 0 failed** (`python tests/run_tests.py`). That is 12 static checks plus 158 behaviour tests in 17 files. The suite covers:
 - **Boot:** loads on Warriors only; creates only its saved variables, slash command and key-binding labels as globals; disabled modules release their events and actions; Options entry and Escape handler.
 - **Bars:** readable values and threshold colors; other power types ignored; hidden values go to widgets with no Lua math; the client's curves drive color and glow; the color curve matches the Lua color rules; low-health sound is edge-triggered and throttled; sound pauses while values are hidden; visibility and opacity rules; attachment to the health bar; preview mode switches off when combat starts.
 - **Swing:** progress and countdown; updater stops when idle; off-hand bar only with an off-hand weapon; hidden or invalid durations ignored; haste rescale; no rescale when attack speed is hidden; weapon-swap restart; sound; range check off by default; disabled module ignores swings; game-option button refused in combat.
@@ -120,6 +120,15 @@ Run on 2026-11-08 against API data for build 1.60.1.70862: **162 passed, 0 faile
   - the module pages say the layout places them.
 - **Stance macros onto an action bar:** one button; three macros side by side on a shown bar; an existing action is never replaced; a second click is harmless; only missing macros are placed; hidden bars are a last resort; full bars are reported; refused in combat or with something on the cursor.
 - **Weapon picker:** only weapons, with no macro, binding or hint text.
+- **Game stance bar option:**
+  - off by default;
+  - when on, each action button becomes a child of the game's stance button, covers it from one level above, and draws only the weapon icons;
+  - left-click equips, right-click opens the picker and does no game action;
+  - hiding the game's bar hides the actions with it;
+  - turning it off brings the addon's bar back;
+  - switched on in combat, it waits for the end of combat with no protected call;
+  - without the game's buttons, the addon's bar is used and you are told once;
+  - the automatic layout leaves the stance bar out.
 - **Warrior effects:** execute splash on a button press (chance 100), never at chance 0, always on a confirmed reset, battle cry on closing, the Sound switch silences them, the switch turns them off, the try button fires once, and nothing keeps running afterwards.
 - **Escape and taint:**
   - nothing is ever added to Blizzard's Escape handler list or `UISpecialFrames`;
@@ -260,6 +269,15 @@ Each test lists what to do, what you should see, and what counts as a failure.
   - Change a module's screen anchor: it must not jump.
   - Turn off "Keep on screen" and drag a bar half off screen; turn it on again and it comes back.
 - **Fonts:** try each font style and each font. Note any font that shows boxes instead of letters, especially accented letters in French.
+
+### T10f - Game stance bar (1.3.0)
+- Stances page: tick **Use the game's stance bar**. Warrior Master's own bar disappears.
+- Hover a stance on the game's bar: Warrior Master's tooltip shows, with a highlight.
+- Right-click it: the weapon picker opens and the stance does **not** change. Pick a weapon: its small icon appears on the game's button.
+- Left-click it: the stance changes and the weapon is equipped. The game's button shows the active stance and cooldown as usual.
+- Hide the game's stance bar (Options > Action Bars), then show it again: nothing stays clickable while it is hidden.
+- Tick the option during a fight: nothing changes until the fight ends, with no error.
+- Untick it: Warrior Master's own bar comes back.
 
 ### T10e - Cast bar, layout, action bar placement and warrior fun (1.2.0)
 - **Cast bar:** cast Hearthstone. The bar shows its icon, name and time left, fills, then fades. Move while casting: it shows "Interrupted".

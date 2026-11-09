@@ -20,6 +20,19 @@ Security model (see SECURITY.md, "Stance & Weapon Manager"):
   (active-stance highlight, cooldown swipe, icons).
 - A stance change detected by events never triggers any action: it only
   updates the highlight.
+
+Game stance bar mode (option "Use the game's stance bar"):
+- The same secure buttons are placed, invisible, on top of the game's own
+  stance buttons (StanceButton1-3 from Blizzard_ActionBar). They become
+  children of those buttons, so they follow their position, scale and
+  visibility. The game's buttons keep drawing the icon, the active stance
+  and the cooldown; Warrior Master only adds the weapon icons, a hover
+  highlight and its tooltip.
+- A click on the game's stance bar then reaches Warrior Master's button:
+  left-click changes stance and equips the chosen weapons, right-click opens
+  the weapon picker (and, unlike the game's button, does not change stance).
+- Nothing of the game's buttons is changed, hooked or moved, and all of
+  this happens out of combat only, like any other secure change.
 ]]
 local _, ns = ...
 
@@ -287,6 +300,58 @@ local function applyButtonStyle(btn, cfg)
 end
 Stance.ApplyButtonStyle = applyButtonStyle
 
+--- The game's stance buttons (Blizzard_ActionBar/Shared/ActionBar.lua names
+-- them StanceButton1-10), or nil when they are not there (another addon may
+-- replace the stance bar).
+function Stance:GetGameButton(index)
+	local button = _G["StanceButton" .. index]
+	if type(button) == "table" and type(button.GetObjectType) == "function" then
+		return button
+	end
+	return nil
+end
+
+--- True when the stance actions are placed on the game's stance bar.
+function Stance:UsesGameBar()
+	local cfg = self:GetConfig()
+	return cfg ~= nil and cfg.useGameBar == true and self:GetGameButton(1) ~= nil
+end
+
+--- Shows or hides the regions that draw a button of its own (the game's
+-- button draws them in game stance bar mode).
+local function setOwnLook(btn, shown)
+	btn.bg:SetShown(shown)
+	btn.icon:SetShown(shown)
+	btn.activeFrame:SetShown(shown)
+	btn.activeGlow:SetShown(shown)
+	btn.hotkey:SetShown(shown)
+	if btn.cooldown then
+		btn.cooldown:SetShown(shown)
+	end
+	if not shown then
+		btn.frameTex:Hide()
+		btn.border:Hide()
+	end
+end
+
+--- Places a secure button invisibly on top of one of the game's stance
+-- buttons (out of combat only).
+local function attachToGameButton(btn, gameButton)
+	if btn:GetParent() ~= gameButton then
+		btn:SetParent(gameButton)
+	end
+	btn:ClearAllPoints()
+	btn:SetAllPoints(gameButton)
+	btn:SetFrameLevel(gameButton:GetFrameLevel() + 10)
+	btn:SetScale(1)
+	setOwnLook(btn, false)
+	if not setAtlas(btn.highlight, Media.buttonAtlas.highlight) then
+		btn.highlight:SetColorTexture(1, 1, 1, 0.15)
+	end
+	btn.highlight:ClearAllPoints()
+	btn.highlight:SetAllPoints(btn)
+end
+
 function Stance:Build()
 	if self.bar then
 		return
@@ -313,7 +378,7 @@ function Stance:Build()
 			ns.DB:Set("stance.point", S.profile.stance.point.default)
 		end,
 		canMove = function()
-			return self.enabled and not Compat.InCombatLockdown()
+			return self.enabled and not Compat.InCombatLockdown() and not self:UsesGameBar()
 		end,
 	})
 end
@@ -814,10 +879,21 @@ function Stance:Configure()
 
 	local size, spacing = cfg.buttonSize, cfg.spacing
 	local horizontal = cfg.orientation == "HORIZONTAL"
+	local useGameBar = self:UsesGameBar()
+	if cfg.useGameBar and not useGameBar and not self.gameBarMissingNotice then
+		self.gameBarMissingNotice = true
+		ns:Print(ns.L.STANCE_GAME_BAR_MISSING)
+	end
+	self.gameBarActive = useGameBar
 	local shown = 0
 	for i = 1, MAX_BUTTONS do
 		local btn = self.buttons[i]
 		local form = self.forms[i]
+		local gameButton = useGameBar and form and self:GetGameButton(form.index)
+		if form and useGameBar and not gameButton then
+			-- The game shows fewer buttons than the forms we know: skip it.
+			form = nil
+		end
 		if form then
 			btn.form = form
 			local macro = self:BuildClickMacro(form)
@@ -831,18 +907,29 @@ function Stance:Configure()
 				setAttributeIfChanged(btn, "type", "spell")
 				setAttributeIfChanged(btn, "spell", form.spellName or form.spellID)
 			end
-			btn:SetSize(size, size)
-			btn:ClearAllPoints()
-			local offset = shown * (size + spacing)
-			if horizontal then
-				btn:SetPoint("TOPLEFT", self.bar, "TOPLEFT", offset, 0)
+			if gameButton then
+				attachToGameButton(btn, gameButton)
 			else
-				btn:SetPoint("TOPLEFT", self.bar, "TOPLEFT", 0, -offset)
+				if btn:GetParent() ~= self.bar then
+					btn:SetParent(self.bar)
+					btn:SetFrameLevel(self.bar:GetFrameLevel() + 1)
+				end
+				setOwnLook(btn, true)
+				btn.highlight:ClearAllPoints()
+				btn.highlight:SetAllPoints(btn.icon)
+				btn:SetSize(size, size)
+				btn:ClearAllPoints()
+				local offset = shown * (size + spacing)
+				if horizontal then
+					btn:SetPoint("TOPLEFT", self.bar, "TOPLEFT", offset, 0)
+				else
+					btn:SetPoint("TOPLEFT", self.bar, "TOPLEFT", 0, -offset)
+				end
+				applyButtonStyle(btn, cfg)
+				shown = shown + 1
 			end
-			applyButtonStyle(btn, cfg)
 			btn.icon:SetTexture(form.icon)
 			btn:Show()
-			shown = shown + 1
 		else
 			btn.form = nil
 			btn.macroText = nil
@@ -862,6 +949,11 @@ function Stance:Configure()
 	self.bar:SetScale(cfg.scale)
 	self.bar:SetAlpha(cfg.alpha)
 	ns.PlaceModuleFrame("stance", self.bar, cfg)
+	if useGameBar then
+		-- No bar of its own: the automatic layout closes the gap.
+		ns.Layout:Request()
+	end
+	-- In game stance bar mode the buttons live on the game's bar.
 	self.bar:SetShown(shown > 0)
 
 	self:UpdateLoadoutVisuals()
@@ -875,8 +967,12 @@ end
 -- Cosmetic updates (allowed in combat: no protected frame is touched) ---------------------------------
 function Stance:UpdateLoadoutVisuals()
 	local cfg = self:GetConfig()
-	local iconSize = math.max(8, math.floor(cfg.buttonSize * 0.36))
 	for _, btn in ipairs(self.buttons) do
+		local width = self.gameBarActive and btn:GetWidth() or cfg.buttonSize
+		if not width or width <= 0 then
+			width = cfg.buttonSize
+		end
+		local iconSize = math.max(8, math.floor(width * 0.36))
 		local form = btn.form
 		local lo = form and self:GetLoadout(form.key)
 		local showIcons = cfg.loadoutIcons and cfg.equipWeapons and lo ~= nil and not lo.set

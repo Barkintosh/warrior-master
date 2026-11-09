@@ -67,6 +67,13 @@ The addon only activates on Warrior characters.
 
 The weapon window only switches weapons: icons per hand, and equipment sets if you have any. Nothing else.
 
+**Prefer the game's own stance bar?** Tick **Use the game's stance bar** on the Stances page. Warrior Master's bar disappears and its actions move onto the game's stance buttons:
+- **Left-click** a stance there: change stance and equip the weapons you chose.
+- **Right-click** it: open the weapon picker (a right-click no longer changes stance).
+- **Look and position:** the game's bar keeps its look, position and cooldowns. Move it with the game's Edit Mode, and keep it shown (Options > Action Bars).
+- **Key bindings:** the game's own stance key bindings still only change stance. Use Warrior Master's bindings to equip as well.
+- **Quick keybind mode:** turn the option off while you set key bindings with the game's quick keybind mode.
+
 ### Key bindings
 *Options > Keybindings > AddOns > Warrior Master* lists **Stance button 1-3**. They press the stance buttons exactly like a click.
 

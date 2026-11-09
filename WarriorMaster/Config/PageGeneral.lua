@@ -109,10 +109,13 @@ ns.Config:RegisterPage({
 					local module = ns.modules[key]
 					local on = ns.db.profile[key].enabled
 					local text = L[module and module.titleKey or key] or key
+					local elsewhere = on and key == "stance" and module and module:UsesGameBar()
 					if not on then
 						text = text .. "  " .. L.LAYOUT_OFF
+					elseif elsewhere then
+						text = text .. "  " .. L.LAYOUT_GAME_BAR
 					end
-					items[#items + 1] = { value = key, text = text, dim = not on }
+					items[#items + 1] = { value = key, text = text, dim = not on or elsewhere }
 				end
 				return items
 			end,

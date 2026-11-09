@@ -41,6 +41,8 @@ ns.Config:RegisterPage({
 		page:Header(L.MODULE_STANCE)
 		page:Note(L.STANCE_SECURITY_NOTE, "info")
 		H.Check(page, "stance.enabled", L.ENABLE)
+		H.Check(page, "stance.useGameBar", L.STANCE_GAME_BAR, { full = true })
+		page:Note(L.STANCE_GAME_BAR_NOTE)
 		H.EnumDropdown(page, "stance.orientation", L.STANCE_ORIENTATION, { HORIZONTAL = "ORIENT_HORIZONTAL", VERTICAL = "ORIENT_VERTICAL" })
 		H.StyleSection(page, "stance")
 		page:Text({
@@ -62,7 +64,7 @@ ns.Config:RegisterPage({
 		H.NumberSlider(page, "stance.scale", L.SCALE)
 		H.NumberSlider(page, "stance.alpha", L.ALPHA_COMBAT)
 		local function inLayout()
-			return ns.Layout:Manages("stance")
+			return ns.Layout:Manages("stance") or stance:UsesGameBar()
 		end
 		H.AnchorDropdown(page, "stance", { disabled = inLayout })
 		H.Check(page, "stance.clamp", L.CLAMP)
@@ -83,6 +85,9 @@ ns.Config:RegisterPage({
 			height = 14,
 			size = 11,
 			get = function()
+				if stance:UsesGameBar() then
+					return L.STANCE_GAME_BAR_PLACED, "info"
+				end
 				return inLayout() and L.LAYOUT_MANAGED or "", "info"
 			end,
 		})
